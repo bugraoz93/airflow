@@ -131,6 +131,7 @@ def initialize_method_map() -> dict[str, Callable]:
         DagRun.get_previous_scheduled_dagrun,
         DagRun.fetch_task_instance,
         DagRun._get_log_template,
+        DagRun._get_task_instances,
         RenderedTaskInstanceFields._update_runtime_evaluated_template_fields,
         SerializedDagModel.get_serialized_dag,
         SerializedDagModel.remove_deleted_dags,
@@ -220,13 +221,14 @@ def internal_airflow_api(body: dict[str, Any]) -> APIResponse:
     except Exception:
         return log_and_build_error_response(message="Error deserializing parameters.", status=400)
 
-    log.debug("Calling method %s\nparams: %s", method_name, params)
+    log.info("Calling method %s\nparams: %s", method_name, params)
     try:
         # Session must be created there as it may be needed by serializer for lazy-loaded fields.
         with create_session() as session:
             output = handler(**params, session=session)
             output_json = BaseSerialization.serialize(output, use_pydantic_models=True)
             response = json.dumps(output_json) if output_json is not None else None
+            log.info("Sending response: %s", response)
             return Response(response=response, headers={"Content-Type": "application/json"})
     except Exception:
         return log_and_build_error_response(message=f"Error executing method '{method_name}'.", status=500)
