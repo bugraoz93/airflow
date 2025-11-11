@@ -32,6 +32,8 @@ from task_sdk_tests.constants import (
     TASK_SDK_HOST_PORT,
 )
 
+from tests_common.test_utils.fernet import update_environment_variable_from_compose_yaml
+
 
 def print_diagnostics(compose, compose_version, docker_version):
     """Print diagnostic information when test fails."""
@@ -116,6 +118,8 @@ def docker_compose_setup(tmp_path_factory):
     # Set environment variables
     os.environ["AIRFLOW_IMAGE_NAME"] = DOCKER_IMAGE
     os.environ["TASK_SDK_VERSION"] = os.environ.get("TASK_SDK_VERSION", "1.1.0")
+
+    update_environment_variable_from_compose_yaml(file_path=tmp_docker_compose_file)
 
     compose = DockerClient(compose_files=[str(tmp_docker_compose_file)])
 
