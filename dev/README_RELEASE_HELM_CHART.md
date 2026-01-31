@@ -519,7 +519,7 @@ cd asf-dist/dev/airflow
 svn update .
 ```
 
-Set an environment variable: PATH_TO_AIRFLOW_SVN to the root of folder where you have airflow-ctl
+Set an environment variable: SVN_REPO_ROOT to the root of folder where you have helm-chart
 
 ```shell script
 cd asf-dist/dev/airflow
