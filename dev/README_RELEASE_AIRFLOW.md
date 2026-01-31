@@ -831,14 +831,24 @@ svn update --set-depth=infinity asf-dist/dev/airflow
 cd asf-dist/dev/airflow/${VERSION_RC}
 for i in *.whl *.tar.gz
 do
-  echo "Checking if $(basename $i) is the same as ${AIRFLOW_REPO_ROOT}/dist/$(basename $i)"
-  diff "$(basename $i)" "${AIRFLOW_REPO_ROOT}/dist/$(basename $i)" && echo "OK"
+  # This conversion needed for how breeze creates packages and how we release them to keep things smooth
+  tar_name=$(basename "$i" | \
+    sed -E "s/(${VERSION//./\\.})([^0-9]|$)/${VERSION_RC}\2/g"
+  )
+  [[ $i == *"source"* ]] && tar_name=$(basename "$i")
+  echo "Checking if $(basename $i) is the same as ${AIRFLOW_REPO_ROOT}/dist/${tar_name}"
+  diff "$(basename $i)" "${AIRFLOW_REPO_ROOT}/dist/${tar_name}" && echo "OK"
 done
 cd ../task-sdk/${TASK_SDK_VERSION_RC}
 for i in *.whl *.tar.gz
 do
-  echo "Checking if $(basename $i) is the same as ${AIRFLOW_REPO_ROOT}/dist/$(basename $i)"
-  diff "$(basename $i)" "${AIRFLOW_REPO_ROOT}/dist/$(basename $i)" && echo "OK"
+  # This conversion needed for how breeze creates packages and how we release them to keep things smooth
+  tar_name=$(basename "$i" | \
+    sed -E "s/(${TASK_SDK_VERSION//./\\.})([^0-9]|$)/${TASK_SDK_VERSION_RC}\2/g"
+  )
+  [[ $i == *"source"* ]] && tar_name=$(basename "$i")
+  echo "Checking if $(basename $i) is the same as ${AIRFLOW_REPO_ROOT}/dist/${tar_name}"
+  diff "$(basename $i)" "${AIRFLOW_REPO_ROOT}/dist/${tar_name}" && echo "OK"
 done
 ```
 
