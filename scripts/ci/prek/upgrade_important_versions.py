@@ -373,6 +373,7 @@ PREK_PATTERNS: list[tuple[re.Pattern, Quoting]] = [
         ),
         Quoting.UNQUOTED,
     ),
+    (re.compile(r"(minimum_prek_version: )('[0-9.abrc]+')", re.MULTILINE), Quoting.SINGLE_QUOTED),
 ]
 
 NODE_LTS_PATTERNS: list[tuple[re.Pattern, Quoting]] = [
