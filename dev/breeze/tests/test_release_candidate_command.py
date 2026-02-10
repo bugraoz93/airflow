@@ -440,54 +440,57 @@ def test_remove_old_releases_removes_both_airflow_and_task_sdk_releases(monkeypa
         # In CI, should simulate SVN commands
         assert "The following old Airflow releases should be removed: ['3.1.5rc2']" in console_messages
         assert "Removing old Airflow release 3.1.5rc2" in console_messages
-        assert "The following old Task SDK releases should be removed: ['1.0.6rc1', '1.0.6rc2']" in console_messages
+        assert (
+            "The following old Task SDK releases should be removed: ['1.0.6rc1', '1.0.6rc2']"
+            in console_messages
+        )
         assert "Removing old Task SDK release 1.0.6rc1" in console_messages
 
         # Should NOT have any actual svn commands
-        assert run_command_calls ==    [
-       (
-           [
-               'svn',
-               'rm',
-               '3.1.5rc2',
-           ],
-           {
-               'check': True,
-           },
-       ),
-       (
-           [
-               'svn',
-               'commit',
-               '-m',
-               'Remove old release: 3.1.5rc2',
-           ],
-           {
-               'check': True,
-           },
-       ),
-       (
-           [
-               'svn',
-               'rm',
-               '1.0.6rc1',
-           ],
-           {
-               'check': True,
-           },
-       ),
-       (
-           [
-               'svn',
-               'commit',
-               '-m',
-               'Remove old Task SDK release: 1.0.6rc1',
-           ],
-           {
-               'check': True,
-           },
-       ),
-   ]
+        assert run_command_calls == [
+            (
+                [
+                    "svn",
+                    "rm",
+                    "3.1.5rc2",
+                ],
+                {
+                    "check": True,
+                },
+            ),
+            (
+                [
+                    "svn",
+                    "commit",
+                    "-m",
+                    "Remove old release: 3.1.5rc2",
+                ],
+                {
+                    "check": True,
+                },
+            ),
+            (
+                [
+                    "svn",
+                    "rm",
+                    "1.0.6rc1",
+                ],
+                {
+                    "check": True,
+                },
+            ),
+            (
+                [
+                    "svn",
+                    "commit",
+                    "-m",
+                    "Remove old Task SDK release: 1.0.6rc1",
+                ],
+                {
+                    "check": True,
+                },
+            ),
+        ]
     else:
         # Both Airflow and Task SDK removals were confirmed
         assert run_command_calls == [
@@ -576,7 +579,10 @@ def test_move_artifacts_to_svn_completes_successfully(monkeypatch, rc_cmd):
 
     if is_ci:
         # In CI, should use mkdir -p instead of svn mkdir
-        assert "[info]Running in CI environment - executing mkdir (override dry-run mode if specified)" in console_messages
+        assert (
+            "[info]Running in CI environment - executing mkdir (override dry-run mode if specified)"
+            in console_messages
+        )
         assert any(
             cmd == ["mkdir", "-p", version] and kwargs.get("check") is True
             for cmd, kwargs in run_command_calls
@@ -704,7 +710,10 @@ def test_push_artifacts_to_asf_repo_completes_successfully(monkeypatch, rc_cmd):
         assert "Airflow Version Files to push to svn:" in console_messages
         assert "Task SDK Version Files to push to svn:" in console_messages
         assert "[success]Files pushed to svn" in console_messages
-        assert "Verify that the files are available here: https://dist.apache.org/repos/dist/dev/airflow/" in console_messages
+        assert (
+            "Verify that the files are available here: https://dist.apache.org/repos/dist/dev/airflow/"
+            in console_messages
+        )
         # There are some SVN traces in the code but still they are just printing and not actually running any SVN commands in CI
     else:
         # In normal environment, should execute SVN commands
