@@ -25,6 +25,11 @@ import pytest
 from airflow_breeze.commands.release_command import find_latest_release_candidate
 
 
+def is_ci_environment() -> bool:
+    """Check if running in CI environment by checking the CI environment variable."""
+    return os.environ.get("CI", "").lower() in ("true", "1", "yes")
+
+
 class TestFindLatestReleaseCandidate:
     """Test the find_latest_release_candidate function."""
 

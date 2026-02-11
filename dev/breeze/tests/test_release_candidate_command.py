@@ -22,7 +22,10 @@ from unittest import mock
 
 import pytest
 
-from conftest import is_ci_environment
+
+def is_ci_environment() -> bool:
+    """Check if running in CI environment by checking the CI environment variable."""
+    return os.environ.get("CI", "").lower() in ("true", "1", "yes")
 
 
 class FakeDirEntry:
