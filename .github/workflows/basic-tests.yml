@@ -369,7 +369,7 @@ jobs:
       GITHUB_USERNAME: ${{ github.actor }}
       VERBOSE: "true"
       CI: "true"
-      #    if: inputs.canary-run == 'true'
+    if: inputs.canary-run == 'true'
     steps:
       - name: "Cleanup repo"
         shell: bash
