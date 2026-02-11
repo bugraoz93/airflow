@@ -368,7 +368,6 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GITHUB_USERNAME: ${{ github.actor }}
       VERBOSE: "true"
-      CI: "true"
     if: inputs.canary-run == 'true'
     steps:
       - name: "Cleanup repo"
