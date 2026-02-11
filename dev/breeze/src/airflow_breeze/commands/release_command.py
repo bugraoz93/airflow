@@ -78,7 +78,7 @@ def clone_asf_repo(working_dir, svn_dev_repo):
         run_command(["svn", "update", "--set-depth", "infinity", release_dir], check=True)
 
 
-def find_latest_release_candidate(version, svn_dev_repo, component="airflow"):
+def find_latest_release_candidate(version, svn_dev_repo, component="airflow", svn_simulation_repo=None):
     """
     Find the latest release candidate for a given version from SVN dev directory.
 
@@ -91,10 +91,12 @@ def find_latest_release_candidate(version, svn_dev_repo, component="airflow"):
 
         def create_simulation_dir(candidate_dir_to_create):
             svn_dev_component_dir = (
-                f"{svn_dev_repo}/{candidate_dir_to_create}"
+                f"{svn_simulation_repo}/{candidate_dir_to_create}"
                 if component == "airflow"
-                else f"{svn_dev_repo}/task-sdk/{candidate_dir_to_create}"
+                else f"{svn_simulation_repo}/task-sdk/{candidate_dir_to_create}"
             )
+            print(f"Creating simulation directory: {svn_dev_component_dir}")
+            print(f"candidate_dir_to_create: {candidate_dir_to_create}")
             run_command(
                 ["mkdir", "-p", f"{svn_dev_component_dir}/{candidate_dir_to_create}"],
                 check=True,
@@ -471,14 +473,16 @@ def airflow_release(version, task_sdk_version):
     # Find the latest release candidate for the given version
     console_print()
     console_print("Finding latest release candidate from SVN dev directory...")
-    release_candidate = find_latest_release_candidate(version, svn_dev_repo, component="airflow")
+    release_candidate = find_latest_release_candidate(
+        version=version, svn_dev_repo=svn_dev_repo, component="airflow", svn_simulation_repo=svn_release_repo
+    )
     if not release_candidate:
         exit(f"No release candidate found for version {version} in SVN dev directory")
 
     task_sdk_release_candidate = None
     if task_sdk_version:
         task_sdk_release_candidate = find_latest_release_candidate(
-            task_sdk_version, svn_dev_repo, component="task-sdk"
+            task_sdk_version, svn_dev_repo, component="task-sdk", svn_simulation_repo=svn_release_repo
         )
         if not task_sdk_release_candidate:
             exit(f"No Task SDK release candidate found for version {task_sdk_version} in SVN dev directory")

@@ -16,6 +16,8 @@
 # under the License.
 from __future__ import annotations
 
+import os
+from unittest import mock
 from unittest.mock import patch
 
 import pytest
@@ -26,6 +28,7 @@ from airflow_breeze.commands.release_command import find_latest_release_candidat
 class TestFindLatestReleaseCandidate:
     """Test the find_latest_release_candidate function."""
 
+    @mock.patch.dict(os.environ, {"CI": "false"})
     def test_find_latest_rc_single_candidate(self, tmp_path):
         """Test finding release candidate when only one exists."""
         svn_dev_repo = tmp_path / "dev" / "airflow"
@@ -37,6 +40,7 @@ class TestFindLatestReleaseCandidate:
         result = find_latest_release_candidate("3.1.7", str(svn_dev_repo), component="airflow")
         assert result == "3.1.7rc1"
 
+    @mock.patch.dict(os.environ, {"CI": "false"})
     def test_find_latest_rc_multiple_candidates(self, tmp_path):
         """Test finding latest release candidate when multiple exist."""
         svn_dev_repo = tmp_path / "dev" / "airflow"
@@ -51,6 +55,7 @@ class TestFindLatestReleaseCandidate:
         result = find_latest_release_candidate("3.1.7", str(svn_dev_repo), component="airflow")
         assert result == "3.1.7rc10"
 
+    @mock.patch.dict(os.environ, {"CI": "false"})
     def test_find_latest_rc_ignores_other_versions(self, tmp_path):
         """Test that function ignores RCs for other versions."""
         svn_dev_repo = tmp_path / "dev" / "airflow"
@@ -65,6 +70,7 @@ class TestFindLatestReleaseCandidate:
         result = find_latest_release_candidate("3.1.7", str(svn_dev_repo), component="airflow")
         assert result == "3.1.7rc2"
 
+    @mock.patch.dict(os.environ, {"CI": "false"})
     def test_find_latest_rc_ignores_non_rc_directories(self, tmp_path):
         """Test that function ignores directories that don't match RC pattern."""
         svn_dev_repo = tmp_path / "dev" / "airflow"
@@ -78,6 +84,7 @@ class TestFindLatestReleaseCandidate:
         result = find_latest_release_candidate("3.1.7", str(svn_dev_repo), component="airflow")
         assert result == "3.1.7rc1"
 
+    @mock.patch.dict(os.environ, {"CI": "false"})
     def test_find_latest_rc_no_match(self, tmp_path):
         """Test that function returns None when no matching RC found."""
         svn_dev_repo = tmp_path / "dev" / "airflow"
@@ -89,6 +96,7 @@ class TestFindLatestReleaseCandidate:
         result = find_latest_release_candidate("3.1.5", str(svn_dev_repo), component="airflow")
         assert result is None
 
+    @mock.patch.dict(os.environ, {"CI": "false"})
     def test_find_latest_rc_directory_not_exists(self, tmp_path):
         """Test that function returns None when directory doesn't exist."""
         svn_dev_repo = tmp_path / "dev" / "airflow"
@@ -97,6 +105,7 @@ class TestFindLatestReleaseCandidate:
         result = find_latest_release_candidate("3.1.7", str(svn_dev_repo), component="airflow")
         assert result is None
 
+    @mock.patch.dict(os.environ, {"CI": "false"})
     def test_find_latest_rc_empty_directory(self, tmp_path):
         """Test that function returns None when directory is empty."""
         svn_dev_repo = tmp_path / "dev" / "airflow"
@@ -105,6 +114,7 @@ class TestFindLatestReleaseCandidate:
         result = find_latest_release_candidate("3.1.7", str(svn_dev_repo), component="airflow")
         assert result is None
 
+    @mock.patch.dict(os.environ, {"CI": "false"})
     def test_find_latest_rc_task_sdk_component(self, tmp_path):
         """Test finding release candidate for task-sdk component."""
         svn_dev_repo = tmp_path / "dev" / "airflow"
@@ -119,6 +129,7 @@ class TestFindLatestReleaseCandidate:
         result = find_latest_release_candidate("1.0.5", str(svn_dev_repo), component="task-sdk")
         assert result == "1.0.5rc3"
 
+    @mock.patch.dict(os.environ, {"CI": "false"})
     def test_find_latest_rc_task_sdk_ignores_airflow_rcs(self, tmp_path):
         """Test that task-sdk component ignores airflow RCs."""
         svn_dev_repo = tmp_path / "dev" / "airflow"
@@ -134,13 +145,18 @@ class TestFindLatestReleaseCandidate:
         result = find_latest_release_candidate("1.1.7", str(svn_dev_repo), component="task-sdk")
         assert result == "1.1.7rc1"
 
+    @mock.patch.dict(os.environ, {"CI": "false"})
     def test_find_latest_rc_handles_oserror(self, tmp_path):
         """Test that function handles OSError gracefully."""
         svn_dev_repo = tmp_path / "dev" / "airflow"
+        svn_simulate_repo = tmp_path / "release" / "airflow"
         svn_dev_repo.mkdir(parents=True)
+        svn_simulate_repo.mkdir(parents=True)
 
         with patch("os.listdir", side_effect=OSError("Permission denied")):
-            result = find_latest_release_candidate("3.1.7", str(svn_dev_repo), component="airflow")
+            result = find_latest_release_candidate(
+                "3.1.5", str(svn_dev_repo), component="airflow", svn_simulation_repo=svn_simulate_repo
+            )
             assert result is None
 
 
