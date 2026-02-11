@@ -38,12 +38,12 @@ RELEASE_PATTERN = re.compile(r"^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)$"
 SVN_NUM_TRIES = 3
 
 
-def clone_asf_repo(working_dir, repo_root):
+def clone_asf_repo(working_dir):
 
     if is_ci_environment():
         console_print("[info]Running in CI environment - simulating SVN checkout")
         # Create empty directory structure to simulate svn checkout (override dry-run if specified)
-        run_command(["mkdir", "-p", f"{repo_root}/asf-dist/dev/airflow"], check=True, dry_run_override=False)
+        run_command(["mkdir", "-p", f"asf-dist/dev/airflow"], check=True, dry_run_override=False)
         console_print("[success]Simulated ASF repo checkout in CI")
         return
 
@@ -78,14 +78,13 @@ def clone_asf_repo(working_dir, repo_root):
         run_command(["svn", "update", "--set-depth", "infinity", release_dir], check=True)
 
 
-def find_latest_release_candidate(version, svn_dev_repo, component="airflow", repo_root=AIRFLOW_ROOT_PATH):
+def find_latest_release_candidate(version, svn_dev_repo, component="airflow"):
     """
     Find the latest release candidate for a given version from SVN dev directory.
 
     :param version: The base version (e.g., "3.0.5")
     :param svn_dev_repo: Path to the SVN dev repository
     :param component: Component name ("airflow" or "task-sdk")
-    :param repo_root: The root path of the Airflow repository (used for simulating SVN checkout in CI)
     :return: The latest release candidate string (e.g., "3.0.5rc3") or None if not found
     """
     if is_ci_environment():
@@ -93,12 +92,12 @@ def find_latest_release_candidate(version, svn_dev_repo, component="airflow", re
         airflow_simulate_release_candidate = "3.1.7rc1"
         task_sdk_simulate_release_candidate = "1.1.7rc1"
         run_command(
-            ["mkdir", "-p", f"{repo_root}/asf-dist/dev/airflow/{airflow_simulate_release_candidate}"],
+            ["mkdir", "-p", f"asf-dist/dev/airflow/{airflow_simulate_release_candidate}"],
             check=True,
             dry_run_override=False,
         )
         run_command(
-            ["mkdir", "-p", f"{repo_root}/asf-dist/dev/airflow/{task_sdk_simulate_release_candidate}"],
+            ["mkdir", "-p", f"asf-dist/dev/airflow/{task_sdk_simulate_release_candidate}"],
             check=True,
             dry_run_override=False,
         )
@@ -456,7 +455,7 @@ def airflow_release(version, task_sdk_version):
     # Clone the asf repo
     os.chdir("..")
     working_dir = os.getcwd()
-    clone_asf_repo(working_dir, repo_root=airflow_repo_root)
+    clone_asf_repo(working_dir)
     svn_dev_repo = f"{working_dir}/asf-dist/dev/airflow"
     svn_release_repo = f"{working_dir}/asf-dist/release/airflow"
     console_print("SVN dev repo root:", svn_dev_repo)
@@ -465,16 +464,14 @@ def airflow_release(version, task_sdk_version):
     # Find the latest release candidate for the given version
     console_print()
     console_print("Finding latest release candidate from SVN dev directory...")
-    release_candidate = find_latest_release_candidate(
-        version, svn_dev_repo, component="airflow", repo_root=airflow_repo_root
-    )
+    release_candidate = find_latest_release_candidate(version, svn_dev_repo, component="airflow")
     if not release_candidate:
         exit(f"No release candidate found for version {version} in SVN dev directory")
 
     task_sdk_release_candidate = None
     if task_sdk_version:
         task_sdk_release_candidate = find_latest_release_candidate(
-            task_sdk_version, svn_dev_repo, component="task-sdk", repo_root=airflow_repo_root
+            task_sdk_version, svn_dev_repo, component="task-sdk"
         )
         if not task_sdk_release_candidate:
             exit(f"No Task SDK release candidate found for version {task_sdk_version} in SVN dev directory")
