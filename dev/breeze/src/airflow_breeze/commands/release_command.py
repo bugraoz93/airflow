@@ -38,7 +38,7 @@ RELEASE_PATTERN = re.compile(r"^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)$"
 SVN_NUM_TRIES = 3
 
 
-def clone_asf_repo(working_dir, svn_dev_repo="asf-dist/dev/airflow"):
+def clone_asf_repo(working_dir, svn_dev_repo):
 
     if is_ci_environment():
         console_print("[info]Running in CI environment - simulating SVN checkout")
@@ -88,19 +88,26 @@ def find_latest_release_candidate(version, svn_dev_repo, component="airflow"):
     :return: The latest release candidate string (e.g., "3.0.5rc3") or None if not found
     """
     if is_ci_environment():
+
+        def create_simulation_dir(candidate_dir_to_create):
+            svn_dev_component_dir = (
+                f"{svn_dev_repo}/{candidate_dir_to_create}"
+                if component == "airflow"
+                else f"{svn_dev_repo}/task-sdk/{candidate_dir_to_create}"
+            )
+            run_command(
+                ["mkdir", "-p", f"{svn_dev_component_dir}/{candidate_dir_to_create}"],
+                check=True,
+                dry_run_override=False,
+            )
+
         console_print("[info]Running in CI environment - simulating SVN find latest release candidate")
-        airflow_simulate_release_candidate = "3.1.7rc1"
-        task_sdk_simulate_release_candidate = "1.1.7rc1"
-        run_command(
-            ["mkdir", "-p", f"{svn_dev_repo}/{airflow_simulate_release_candidate}"],
-            check=True,
-            dry_run_override=False,
-        )
-        run_command(
-            ["mkdir", "-p", f"{svn_dev_repo}/{task_sdk_simulate_release_candidate}"],
-            check=True,
-            dry_run_override=False,
-        )
+        airflow_simulate_release_candidate = ["3.1.7rc1", "3.1.7rc2", "3.1.7rc3"]
+        task_sdk_simulate_release_candidate = ["1.1.7rc1", "1.1.7rc2", "1.1.7rc3"]
+        for candidate in airflow_simulate_release_candidate:
+            create_simulation_dir(candidate)
+        for candidate in task_sdk_simulate_release_candidate:
+            create_simulation_dir(candidate)
         console_print("[success]Simulated ASF repo checkout in CI")
         return (
             airflow_simulate_release_candidate

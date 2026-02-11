@@ -32,10 +32,10 @@ class TestFindLatestReleaseCandidate:
         svn_dev_repo.mkdir(parents=True)
 
         # Create a single RC directory
-        (svn_dev_repo / "3.0.5rc1").mkdir()
+        (svn_dev_repo / "3.1.7rc1").mkdir()
 
-        result = find_latest_release_candidate("3.0.5", str(svn_dev_repo), component="airflow")
-        assert result == "3.0.5rc1"
+        result = find_latest_release_candidate("3.1.7", str(svn_dev_repo), component="airflow")
+        assert result == "3.1.7rc1"
 
     def test_find_latest_rc_multiple_candidates(self, tmp_path):
         """Test finding latest release candidate when multiple exist."""
@@ -43,13 +43,13 @@ class TestFindLatestReleaseCandidate:
         svn_dev_repo.mkdir(parents=True)
 
         # Create multiple RC directories
-        (svn_dev_repo / "3.0.5rc1").mkdir()
-        (svn_dev_repo / "3.0.5rc2").mkdir()
-        (svn_dev_repo / "3.0.5rc3").mkdir()
-        (svn_dev_repo / "3.0.5rc10").mkdir()  # Test that rc10 > rc3
+        (svn_dev_repo / "3.1.7rc1").mkdir()
+        (svn_dev_repo / "3.1.7rc2").mkdir()
+        (svn_dev_repo / "3.1.7rc3").mkdir()
+        (svn_dev_repo / "3.1.7rc10").mkdir()  # Test that rc10 > rc3
 
-        result = find_latest_release_candidate("3.0.5", str(svn_dev_repo), component="airflow")
-        assert result == "3.0.5rc10"
+        result = find_latest_release_candidate("3.1.7", str(svn_dev_repo), component="airflow")
+        assert result == "3.1.7rc10"
 
     def test_find_latest_rc_ignores_other_versions(self, tmp_path):
         """Test that function ignores RCs for other versions."""
@@ -58,12 +58,12 @@ class TestFindLatestReleaseCandidate:
 
         # Create RCs for different versions
         (svn_dev_repo / "3.0.4rc1").mkdir()
-        (svn_dev_repo / "3.0.5rc1").mkdir()
-        (svn_dev_repo / "3.0.5rc2").mkdir()
+        (svn_dev_repo / "3.1.7rc1").mkdir()
+        (svn_dev_repo / "3.1.7rc2").mkdir()
         (svn_dev_repo / "3.0.6rc1").mkdir()
 
-        result = find_latest_release_candidate("3.0.5", str(svn_dev_repo), component="airflow")
-        assert result == "3.0.5rc2"
+        result = find_latest_release_candidate("3.1.7", str(svn_dev_repo), component="airflow")
+        assert result == "3.1.7rc2"
 
     def test_find_latest_rc_ignores_non_rc_directories(self, tmp_path):
         """Test that function ignores directories that don't match RC pattern."""
@@ -71,12 +71,12 @@ class TestFindLatestReleaseCandidate:
         svn_dev_repo.mkdir(parents=True)
 
         # Create RC directory and non-RC directories
-        (svn_dev_repo / "3.0.5rc1").mkdir()
-        (svn_dev_repo / "3.0.5").mkdir()  # Final release directory
+        (svn_dev_repo / "3.1.7rc1").mkdir()
+        (svn_dev_repo / "3.1.7").mkdir()  # Final release directory
         (svn_dev_repo / "some-other-dir").mkdir()
 
-        result = find_latest_release_candidate("3.0.5", str(svn_dev_repo), component="airflow")
-        assert result == "3.0.5rc1"
+        result = find_latest_release_candidate("3.1.7", str(svn_dev_repo), component="airflow")
+        assert result == "3.1.7rc1"
 
     def test_find_latest_rc_no_match(self, tmp_path):
         """Test that function returns None when no matching RC found."""
@@ -86,7 +86,7 @@ class TestFindLatestReleaseCandidate:
         # Create RCs for different version
         (svn_dev_repo / "3.0.4rc1").mkdir()
 
-        result = find_latest_release_candidate("3.0.5", str(svn_dev_repo), component="airflow")
+        result = find_latest_release_candidate("3.1.5", str(svn_dev_repo), component="airflow")
         assert result is None
 
     def test_find_latest_rc_directory_not_exists(self, tmp_path):
@@ -94,7 +94,7 @@ class TestFindLatestReleaseCandidate:
         svn_dev_repo = tmp_path / "dev" / "airflow"
         # Don't create the directory
 
-        result = find_latest_release_candidate("3.0.5", str(svn_dev_repo), component="airflow")
+        result = find_latest_release_candidate("3.1.7", str(svn_dev_repo), component="airflow")
         assert result is None
 
     def test_find_latest_rc_empty_directory(self, tmp_path):
@@ -102,7 +102,7 @@ class TestFindLatestReleaseCandidate:
         svn_dev_repo = tmp_path / "dev" / "airflow"
         svn_dev_repo.mkdir(parents=True)
 
-        result = find_latest_release_candidate("3.0.5", str(svn_dev_repo), component="airflow")
+        result = find_latest_release_candidate("3.1.7", str(svn_dev_repo), component="airflow")
         assert result is None
 
     def test_find_latest_rc_task_sdk_component(self, tmp_path):
@@ -127,12 +127,12 @@ class TestFindLatestReleaseCandidate:
         task_sdk_dir.mkdir()
 
         # Create airflow RC (should be ignored)
-        (svn_dev_repo / "3.0.5rc1").mkdir()
+        (svn_dev_repo / "3.1.7rc1").mkdir()
         # Create task-sdk RC
-        (task_sdk_dir / "1.0.5rc1").mkdir()
+        (task_sdk_dir / "1.1.7rc1").mkdir()
 
-        result = find_latest_release_candidate("1.0.5", str(svn_dev_repo), component="task-sdk")
-        assert result == "1.0.5rc1"
+        result = find_latest_release_candidate("1.1.7", str(svn_dev_repo), component="task-sdk")
+        assert result == "1.1.7rc1"
 
     def test_find_latest_rc_handles_oserror(self, tmp_path):
         """Test that function handles OSError gracefully."""
@@ -140,7 +140,7 @@ class TestFindLatestReleaseCandidate:
         svn_dev_repo.mkdir(parents=True)
 
         with patch("os.listdir", side_effect=OSError("Permission denied")):
-            result = find_latest_release_candidate("3.0.5", str(svn_dev_repo), component="airflow")
+            result = find_latest_release_candidate("3.1.7", str(svn_dev_repo), component="airflow")
             assert result is None
 
 
@@ -162,7 +162,7 @@ def release_cmd():
 
 
 def test_remove_old_release_only_collects_release_directories(monkeypatch, release_cmd):
-    version = "3.0.5"
+    version = "3.1.7"
     task_sdk_version = "1.0.5"
     svn_release_repo = "/svn/release/repo"
 
@@ -237,7 +237,7 @@ def test_remove_old_release_only_collects_release_directories(monkeypatch, relea
 
 
 def test_remove_old_release_returns_early_when_user_declines(monkeypatch, release_cmd):
-    version = "3.0.5"
+    version = "3.1.7"
     task_sdk_version = "1.0.5"
     svn_release_repo = "/svn/release/repo"
 
@@ -353,7 +353,7 @@ def test_remove_old_release_removes_confirmed_old_releases(monkeypatch, release_
 
 
 def test_remove_old_release_no_old_releases(monkeypatch, release_cmd):
-    version = "3.0.5"
+    version = "3.1.7"
     task_sdk_version = "1.0.5"
     svn_release_repo = "/svn/release/repo"
 
@@ -406,7 +406,7 @@ def test_remove_old_release_no_old_releases(monkeypatch, release_cmd):
 
 
 def test_remove_old_release_task_sdk_only(monkeypatch, release_cmd):
-    version = "3.0.5"
+    version = "3.1.7"
     task_sdk_version = "1.0.5"
     svn_release_repo = "/svn/release/repo"
 
@@ -479,7 +479,7 @@ def test_remove_old_release_task_sdk_only(monkeypatch, release_cmd):
 
 
 def test_remove_old_release_no_task_sdk_version(monkeypatch, release_cmd):
-    version = "3.0.5"
+    version = "3.1.7"
     task_sdk_version = None
     svn_release_repo = "/svn/release/repo"
 

@@ -16,6 +16,8 @@
 # under the License.
 from __future__ import annotations
 
+import os
+
 import pytest
 
 from airflow_breeze.utils.functools_cache import clear_all_cached_functions
@@ -72,3 +74,8 @@ def json_decode_error():
     import requests
 
     return requests.exceptions.JSONDecodeError("", "", 0)
+
+
+def is_ci_environment() -> bool:
+    """Check if running in CI environment by checking the CI environment variable."""
+    return os.environ.get("CI", "").lower() in ("true", "1", "yes")
