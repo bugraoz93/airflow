@@ -90,8 +90,24 @@ def find_latest_release_candidate(version, svn_dev_repo, component="airflow", re
     """
     if is_ci_environment():
         console_print("[info]Running in CI environment - simulating SVN find latest release candidate")
+        airflow_simulate_release_candidate = "3.1.7rc1"
+        task_sdk_simulate_release_candidate = "1.1.7rc1"
+        run_command(
+            ["mkdir", "-p", f"{repo_root}/asf-dist/dev/airflow/{airflow_simulate_release_candidate}"],
+            check=True,
+            dry_run_override=False,
+        )
+        run_command(
+            ["mkdir", "-p", f"{repo_root}/asf-dist/dev/airflow/{task_sdk_simulate_release_candidate}"],
+            check=True,
+            dry_run_override=False,
+        )
         console_print("[success]Simulated ASF repo checkout in CI")
-        return "3.1.7rc1" if component == "airflow" else "1.1.7rc1"
+        return (
+            airflow_simulate_release_candidate
+            if component == "airflow"
+            else task_sdk_simulate_release_candidate
+        )
 
     if component == "task-sdk":
         search_dir = f"{svn_dev_repo}/task-sdk"
