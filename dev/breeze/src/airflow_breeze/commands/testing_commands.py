@@ -896,7 +896,6 @@ def task_sdk_integration_tests(
 @option_test_timeout
 @option_verbose
 @option_dry_run
-@option_include_success_outputs
 @option_github_repository
 @click.option(
     "--airflow-ctl-version",

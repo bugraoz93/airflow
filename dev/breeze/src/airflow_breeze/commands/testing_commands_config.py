@@ -247,7 +247,6 @@ TESTING_PARAMETERS: dict[str, list[dict[str, str | list[str]]]] = {
         {
             "name": "Common CI options",
             "options": [
-                "--include-success-outputs",
                 "--github-repository",
             ],
         },
