@@ -262,4 +262,4 @@ jobs:
           fi
         env:
           AIRFLOW_VERSION: "${{ matrix.airflow-version }}"
-    if: inputs.run-airflow-ctl-integration-tests == 'true' && inputs.integration-test-type == 'integration'
+    if: inputs.run-airflow-ctl-integration-tests == 'true'
