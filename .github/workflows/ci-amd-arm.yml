@@ -795,7 +795,6 @@ jobs:
       canary-run: ${{ needs.build-info.outputs.canary-run }}
       use-uv: ${{ needs.build-info.outputs.use-uv }}
       run-ui-e2e-tests: ${{ needs.build-info.outputs.run-ui-e2e-tests }}
-      run-airflow-ctl-integration-tests: ${{ needs.build-info.outputs.run-airflow-ctl-integration-tests }}
     if: needs.build-info.outputs.prod-image-build == 'true'
 
   tests-kubernetes:
@@ -893,6 +892,29 @@ jobs:
       distribution-name: "airflow-ctl"
       distribution-cmd-format: "prepare-airflow-ctl-distributions"
       test-type: "airflow-ctl-tests"
+      use-local-venv: 'true'
+      test-timeout: 20
+    if: needs.build-info.outputs.run-airflow-ctl-tests == 'true'
+
+  tests-airflow-ctl-integrations:
+    name: "Airflow CTL tests"
+    uses: ./.github/workflows/airflow-distributions-tests.yml
+    needs: [build-info]
+    permissions:
+      contents: read
+      packages: read
+    with:
+      runners: ${{ needs.build-info.outputs.runner-type }}
+      platform: ${{ needs.build-info.outputs.platform }}
+      default-python-version: "${{ needs.build-info.outputs.default-python-version }}"
+      python-versions: ${{ needs.build-info.outputs.python-versions }}
+      use-uv: ${{ needs.build-info.outputs.use-uv }}
+      canary-run: ${{ needs.build-info.outputs.canary-run }}
+      distribution-name: "airflow-ctl-integration"
+      distribution-cmd-format: "prepare-airflow-ctl-distributions"
+      test-type: "airflow-ctl-integration-tests"
+      run-airflow-ctl-integration-tests: ${{ needs.build-info.outputs.run-airflow-ctl-integration-tests }}
+      integration-test-type: "integration"
       use-local-venv: 'true'
       test-timeout: 20
     if: needs.build-info.outputs.run-airflow-ctl-tests == 'true'

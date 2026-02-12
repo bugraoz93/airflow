@@ -881,12 +881,23 @@ def task_sdk_integration_tests(
     ),
 )
 @option_python
-@option_image_name
+@option_use_airflow_version
 @option_skip_docker_compose_deletion
-@option_github_repository
-@option_include_success_outputs
+@option_backend
+@option_enable_coverage
+@option_collect_only
+@option_forward_credentials
+@option_core_integration
+@option_keep_env_variables
+@option_mount_sources
+@option_mysql_version
+@option_postgres_version
+@option_force_sa_warnings
+@option_test_timeout
 @option_verbose
 @option_dry_run
+@option_include_success_outputs
+@option_github_repository
 @click.option(
     "--airflow-ctl-version",
     help="Version of airflowctl to test",
@@ -897,10 +908,20 @@ def task_sdk_integration_tests(
 @click.argument("extra_pytest_args", nargs=-1, type=click.Path(path_type=str))
 def airflowctl_integration_tests(
     python: str,
-    image_name: str | None,
+    use_airflow_version: str,
     skip_docker_compose_deletion: bool,
+    backend: str,
+    enable_coverage: bool,
+    collect_only: bool,
+    forward_credentials: bool,
+    integration: tuple,
+    keep_env_variables: bool,
+    mount_sources: str,
+    mysql_version: str,
+    postgres_version: str,
+    force_sa_warnings: bool,
+    test_timeout: int,
     github_repository: str,
-    include_success_outputs: bool,
     airflow_ctl_version: str | None,
     extra_pytest_args: tuple,
 ):
@@ -911,24 +932,42 @@ def airflowctl_integration_tests(
     perform_environment_checks()
     if airflow_ctl_version:
         os.environ["AIRFLOW_CTL_VERSION"] = airflow_ctl_version
-    image_name = image_name or os.environ.get("DOCKER_IMAGE")
 
-    if image_name is None:
-        build_params = BuildProdParams(python=python, github_repository=github_repository)
-        image_name = build_params.airflow_image_name
-
-    get_console().print(f"[info]Running airflowctl integration tests with PROD image: {image_name}[/]")
     get_console().print(f"[info]Using airflowctl version: {airflow_ctl_version}[/]")
-    return_code, info = run_docker_compose_tests(
-        image_name=image_name,
-        python_version=python,
-        include_success_outputs=include_success_outputs,
-        extra_pytest_args=extra_pytest_args,
-        skip_docker_compose_deletion=skip_docker_compose_deletion,
-        skip_mounting_local_volumes=False,
-        test_type="airflow-ctl-integration",
+    shell_params = ShellParams(
+        test_group=GroupOfTests.CTL_INTEGRATION,
+        backend=backend,
+        collect_only=collect_only,
+        enable_coverage=enable_coverage,
+        forward_credentials=forward_credentials,
+        forward_ports=False,
+        github_repository=github_repository,
+        integration=integration,
+        keep_env_variables=keep_env_variables,
+        mount_sources=mount_sources,
+        mysql_version=mysql_version,
+        skip_db_tests=False,
+        no_db_cleanup=False,
+        postgres_version=postgres_version,
+        python=python,
+        force_sa_warnings=force_sa_warnings,
+        use_airflow_version=use_airflow_version,
+        run_tests=True,
+        test_type="All",
     )
-    sys.exit(return_code)
+    fix_ownership_using_docker()
+    cleanup_python_generated_files()
+    perform_environment_checks()
+    returncode, _ = _run_test(
+        shell_params=shell_params,
+        extra_pytest_args=extra_pytest_args,
+        python_version=python,
+        output=None,
+        test_timeout=test_timeout,
+        output_outside_the_group=True,
+        skip_docker_compose_down=skip_docker_compose_deletion,
+    )
+    sys.exit(returncode)
 
 
 @testing_group.command(

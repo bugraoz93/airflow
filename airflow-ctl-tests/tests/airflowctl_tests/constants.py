@@ -31,5 +31,5 @@ DOCKER_COMPOSE_FILE_PATH = (
     AIRFLOW_ROOT_PATH / "airflow-core" / "docs" / "howto" / "docker-compose" / "docker-compose.yaml"
 )
 
-LOGIN_COMMAND = "auth login --username airflow --password airflow"
+LOGIN_COMMAND = "auth login --username admin --password admin"
 LOGIN_OUTPUT = "Login successful! Welcome to airflowctl!"
