@@ -899,10 +899,6 @@ jobs:
     name: "Airflow CTL integration tests"
     uses: ./.github/workflows/airflow-distributions-tests.yml
     needs: [build-info, build-ci-images]
-    strategy:
-      fail-fast: false
-      matrix:
-        airflow-version: [ "3.1.7", "3.2.0" ]
     permissions:
       contents: read
       packages: read

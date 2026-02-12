@@ -75,11 +75,6 @@ on:  # yamllint disable-line rule:truthy
         required: false
         default: "unit"
         type: string
-      airflow-version:
-        description: "Airflow version to run the airflow-ctl-integration-tests with"
-        required: false
-        default: "3.1.7"
-        type: string
 permissions:
   contents: read
 jobs:
@@ -149,6 +144,10 @@ jobs:
     timeout-minutes: 60
     name: "Airflow CTL integration tests"
     runs-on: ${{ fromJSON(inputs.runners) }}
+    strategy:
+      fail-fast: false
+      matrix:
+        airflow-version: ["3.1.7", "3.2.0"]
     env:
       PYTHON_MAJOR_MINOR_VERSION: "${{ inputs.default-python-version }}"
       GITHUB_REPOSITORY: ${{ github.repository }}
@@ -175,5 +174,5 @@ jobs:
       - name: "Run airflowctl integration tests"
         run: breeze testing airflow-ctl-integration-tests --use-airflow-version ${AIRFLOW_VERSION}
         env:
-          AIRFLOW_VERSION: "${{ inputs.airflow-version }}"
+          AIRFLOW_VERSION: "${{ matrix.airflow-version }}"
     if: inputs.run-airflow-ctl-integration-tests == 'true' && inputs.integration-test-type == 'integration'
