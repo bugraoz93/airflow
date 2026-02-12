@@ -816,7 +816,6 @@ jobs:
       ( needs.build-info.outputs.run-kubernetes-tests == 'true' ||
       needs.build-info.outputs.run-helm-tests == 'true')
 
-
   tests-task-sdk:
     name: "Task SDK tests"
     uses: ./.github/workflows/airflow-distributions-tests.yml
@@ -899,7 +898,7 @@ jobs:
   tests-airflow-ctl-integrations:
     name: "Airflow CTL tests"
     uses: ./.github/workflows/airflow-distributions-tests.yml
-    needs: [build-info]
+    needs: [build-info, build-ci-images]
     permissions:
       contents: read
       packages: read
