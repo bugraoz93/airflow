@@ -67,18 +67,19 @@ on:  # yamllint disable-line rule:truthy
         default: 60
       run-airflow-ctl-integration-tests:
         description: "Whether to run Airflow CTL integration tests (true/false)"
-        required: true
+        required: false
+        default: "false"
         type: string
       integration-test-type:
         description: "To decide whether regular tests to run or other stated eg airflow-ctl-integration-tests"
         required: false
-        default: unit
+        default: "unit"
         type: string
 permissions:
   contents: read
 jobs:
   distributions-tests:
-    if: ${{ inputs.integration-test-type == unit }}
+    if: ${{ inputs.integration-test-type == 'unit' }}
     timeout-minutes: ${{ fromJSON(inputs.test-timeout) }}
     name: ${{ inputs.distribution-name }}:P${{ matrix.python-version }} tests
     runs-on: ${{ fromJSON(inputs.runners) }}
