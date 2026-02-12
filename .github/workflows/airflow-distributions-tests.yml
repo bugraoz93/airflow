@@ -142,7 +142,7 @@ jobs:
 
   airflow-ctl-integration-tests:
     timeout-minutes: 60
-    name: "Airflow CTL integration tests with PROD image"
+    name: "Airflow CTL integration tests"
     runs-on: ${{ fromJSON(inputs.runners) }}
     strategy:
       fail-fast: false

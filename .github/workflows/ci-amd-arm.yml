@@ -896,7 +896,7 @@ jobs:
     if: needs.build-info.outputs.run-airflow-ctl-tests == 'true'
 
   tests-airflow-ctl-integrations:
-    name: "Airflow CTL tests"
+    name: "Airflow CTL integration tests"
     uses: ./.github/workflows/airflow-distributions-tests.yml
     needs: [build-info, build-ci-images]
     permissions:
