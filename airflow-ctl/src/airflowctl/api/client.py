@@ -20,21 +20,24 @@ from __future__ import annotations
 import contextlib
 import enum
 import getpass
+import importlib
 import json
 import os
 import sys
+import types
 from collections.abc import Callable
 from functools import wraps
 from typing import TYPE_CHECKING, Any, Literal, ParamSpec, TypeVar, cast
 
 import httpx
 import keyring
+import requests
 import structlog
 from httpx import URL
 from keyring.errors import NoKeyringError
 from uuid6 import uuid7
 
-from airflowctl import __version__ as version
+from airflowctl import __latest_supported_airflow_version__, __version__ as version
 from airflowctl.api.operations import (
     AssetsOperations,
     BackfillOperations,
@@ -88,6 +91,14 @@ class ClientKind(enum.Enum):
 
     CLI = "cli"
     AUTH = "auth"
+    NO_AUTH = "no_auth"
+
+
+class URLGenKind(enum.Enum):
+    """URL generation kind enum."""
+
+    CLI = "cli"
+    INIT = "init"
 
 
 def add_correlation_id(request: httpx.Request):
@@ -243,6 +254,58 @@ class Credentials:
         return self
 
 
+class AirflowCtlSchemaLocator:
+    def __init__(
+        self, base_url: str, client_kind: Literal[ClientKind.AUTH, ClientKind.CLI, ClientKind.NO_AUTH]
+    ):
+        self.base_url = base_url
+        self.client_kind = client_kind
+        self.schema = self._get_schema_module_name(kind=client_kind)
+
+    def get_airflow_version(self):
+        """Make a request to the version endpoint to get the server version."""
+        version_url = f"{self.base_url}/version"
+        try:
+            airflow_api_version_response = requests.get(version_url).json()
+        except Exception as e:
+            raise e
+        return airflow_api_version_response["version"]
+
+    def _get_schema_module_name(
+        self, kind: Literal[ClientKind.AUTH, ClientKind.CLI, ClientKind.NO_AUTH] = ClientKind.CLI
+    ) -> str:
+        """Get the schema module name based on the base URL and client kind."""
+        if os.getenv("AIRFLOW_CLI_UNIT_TEST_MODE") == "true":
+            return f"airflowctl.api.datamodels.{'auth_generated' if kind == ClientKind.AUTH else 'generated'}"
+
+        airflow_api_version = self.get_airflow_version()
+        base_import = "airflowctl.api.datamodels"
+        is_compat = airflow_api_version != __latest_supported_airflow_version__
+        suffix = f".{airflow_api_version.replace('.', '_').replace('-', '_')}" if is_compat else ""
+        compat = ".compat" if is_compat else ""
+        generated = "auth_generated" if kind == ClientKind.AUTH else "generated"
+        return f"{base_import}{compat}{suffix}.{generated}"
+
+    def dynamic_load_schemas(self) -> types.ModuleType:
+        """Dynamically load the schemas based on the current base URL."""
+        # Importing generated schemas dynamically, this part can break everywhere
+        try:
+            __import__(self.schema)
+        except ImportError:
+            raise ImportError(
+                f"Could not import versioned schema {self.schema} \n"
+                f"Please ensure that the schema for Airflow version {self.schema} is available."
+            )
+
+        try:
+            return importlib.import_module(self.schema)
+        except ModuleNotFoundError as e:
+            raise ModuleNotFoundError(
+                "Generated schemas not found. "
+                "Please ensure that the schemas are generated and available for your Airflow (API) version."
+            ) from e
+
+
 class BearerAuth(httpx.Auth):
     def __init__(self, token: str):
         self.token: str = token
@@ -262,6 +325,7 @@ class Client(httpx.Client):
         base_url: str,
         token: str,
         kind: Literal[ClientKind.CLI, ClientKind.AUTH] = ClientKind.CLI,
+        ctl_gen_schemas: types.ModuleType | None = None,
         **kwargs: Any,
     ) -> None:
         auth = BearerAuth(token)
@@ -273,22 +337,39 @@ class Client(httpx.Client):
             event_hooks={"response": [raise_on_4xx_5xx], "request": [add_correlation_id]},
             **kwargs,
         )
+        # Internal state
+        self.ctl_gen_schemas = (
+            ctl_gen_schemas
+            or AirflowCtlSchemaLocator(
+                base_url=self._get_base_url(base_url=base_url, kind=kind, url_gen_kind=URLGenKind.INIT),
+                client_kind=kind,
+            ).dynamic_load_schemas()
+        )
 
     def refresh_base_url(
-        self, base_url: str, kind: Literal[ClientKind.AUTH, ClientKind.CLI] = ClientKind.CLI
+        self,
+        base_url: str,
+        kind: Literal[ClientKind.AUTH, ClientKind.CLI, ClientKind.NO_AUTH] = ClientKind.CLI,
     ):
         """Refresh the base URL of the client."""
         self.base_url = URL(self._get_base_url(base_url=base_url, kind=kind))
 
     @classmethod
     def _get_base_url(
-        cls, base_url: str, kind: Literal[ClientKind.AUTH, ClientKind.CLI] = ClientKind.CLI
+        cls,
+        base_url: str,
+        kind: Literal[ClientKind.AUTH, ClientKind.CLI, ClientKind.NO_AUTH] = ClientKind.CLI,
+        url_gen_kind: Literal[URLGenKind.CLI, URLGenKind.INIT] = URLGenKind.CLI,
     ) -> str:
         """Get the base URL of the client."""
         base_url = base_url.rstrip("/")
+        default_base_url = f"{base_url}/api/v2"
+        if url_gen_kind == URLGenKind.INIT:
+            return default_base_url
+
         if kind == ClientKind.AUTH:
             return f"{base_url}/auth"
-        return f"{base_url}/api/v2"
+        return default_base_url
 
     @lru_cache()  # type: ignore[prop-decorator]
     @property

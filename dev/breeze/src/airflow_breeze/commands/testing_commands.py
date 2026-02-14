@@ -932,6 +932,9 @@ def airflowctl_integration_tests(
     if airflow_ctl_version:
         os.environ["AIRFLOW_CTL_VERSION"] = airflow_ctl_version
 
+    if use_airflow_version:
+        os.environ["AIRFLOW_VERSION"] = use_airflow_version
+
     get_console().print(f"[info]Using airflowctl version: {airflow_ctl_version}[/]")
     shell_params = ShellParams(
         test_group=GroupOfTests.CTL_INTEGRATION,

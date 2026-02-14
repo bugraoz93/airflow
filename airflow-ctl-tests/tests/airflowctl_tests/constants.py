@@ -19,6 +19,8 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from packaging.version import Version
+
 AIRFLOW_ROOT_PATH = Path(__file__).resolve().parents[3]
 
 DEFAULT_PYTHON_MAJOR_MINOR_VERSION = "3.10"
@@ -33,3 +35,5 @@ DOCKER_COMPOSE_FILE_PATH = (
 
 LOGIN_COMMAND = "auth login --username admin --password admin"
 LOGIN_OUTPUT = "Login successful! Welcome to airflowctl!"
+
+TEST_AIRFLOW_VERSION = Version(os.environ.get("AIRFLOW_VERSION", "3.2.0"))

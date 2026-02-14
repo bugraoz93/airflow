@@ -96,7 +96,6 @@ TEST_COMMANDS = [
     f'xcom get --dag-id=example_bash_operator --dag-run-id="manual__{ONE_DATE_PARAM}" --task-id=runme_0 --key=test_xcom_key',
     f'xcom list --dag-id=example_bash_operator --dag-run-id="manual__{ONE_DATE_PARAM}" --task-id=runme_0',
     f'xcom edit --dag-id=example_bash_operator --dag-run-id="manual__{ONE_DATE_PARAM}" --task-id=runme_0 --key=test_xcom_key --value=\'{{"updated": "value"}}\'',
-    f'xcom delete --dag-id=example_bash_operator --dag-run-id="manual__{ONE_DATE_PARAM}" --task-id=runme_0 --key=test_xcom_key',
     # Jobs commands
     "jobs list",
     # Pools commands

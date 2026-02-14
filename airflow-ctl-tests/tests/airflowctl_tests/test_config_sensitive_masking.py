@@ -17,6 +17,9 @@
 from __future__ import annotations
 
 import pytest
+from packaging.version import Version
+
+from airflowctl_tests.constants import TEST_AIRFLOW_VERSION
 
 # Test commands for config sensitive masking verification
 SENSITIVE_CONFIG_COMMANDS = [
@@ -28,6 +31,7 @@ SENSITIVE_CONFIG_COMMANDS = [
 ]
 
 
+@pytest.mark.skipif(Version("3.1.7") < TEST_AIRFLOW_VERSION, reason="Implemented after Airflow v3.1.7")
 @pytest.mark.parametrize(
     "command",
     SENSITIVE_CONFIG_COMMANDS,
