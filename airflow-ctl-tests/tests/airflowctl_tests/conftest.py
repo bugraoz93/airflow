@@ -211,6 +211,7 @@ def start_airflow_services(tmp_path_factory):
     import subprocess
     import time
 
+    # If things started getting flaky for waiting jobs to run, increase this
     process_wait_time = 5
 
     tmp_dir = tmp_path_factory.mktemp("airflow-ctl-test")
