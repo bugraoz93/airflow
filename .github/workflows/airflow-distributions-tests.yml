@@ -65,6 +65,7 @@ on:  # yamllint disable-line rule:truthy
         required: false
         type: number
         default: 60
+
 permissions:
   contents: read
 jobs:
