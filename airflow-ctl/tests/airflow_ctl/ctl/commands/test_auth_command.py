@@ -161,6 +161,7 @@ class TestCliAuthCommands:
             )
 
 
+@mock.patch.dict(os.environ, {"AIRFLOW_CLI_UNIT_TEST_MODE": "false", "AIRFLOW_CLI_DEBUG_MODE": "false"})
 class TestListEnvs:
     parser = cli_parser.get_parser()
 
