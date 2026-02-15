@@ -83,7 +83,7 @@ Airflow Version Compatibility
    * - 3.1.3
      - Yes
    * - 3.1.4
-     - Yes
+     - No (Yanked)
    * - 3.1.5
      - Yes
    * - 3.1.6

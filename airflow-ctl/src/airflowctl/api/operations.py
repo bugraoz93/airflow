@@ -175,7 +175,7 @@ class BaseOperations:
         total_entries = first_pass.total_entries  # type: ignore[attr-defined]
         if total_entries < limit:
             return first_pass
-        found_key = None
+        found_key = ""
         for key, value in first_pass.model_dump().items():
             if key != "total_entries" and isinstance(value, list):
                 found_key = key

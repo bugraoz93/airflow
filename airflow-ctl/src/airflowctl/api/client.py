@@ -281,7 +281,7 @@ class AirflowCtlSchemaLocator:
         airflow_api_version = self.get_airflow_version()
         base_import = "airflowctl.api.datamodels"
         is_compat = airflow_api_version != __latest_supported_airflow_version__
-        suffix = f".{airflow_api_version.replace('.', '_').replace('-', '_')}" if is_compat else ""
+        suffix = f".v{airflow_api_version.replace('.', '_').replace('-', '_')}" if is_compat else ""
         compat = ".compat" if is_compat else ""
         generated = "auth_generated" if kind == ClientKind.AUTH else "generated"
         return f"{base_import}{compat}{suffix}.{generated}"
@@ -324,7 +324,7 @@ class Client(httpx.Client):
         *,
         base_url: str,
         token: str,
-        kind: Literal[ClientKind.CLI, ClientKind.AUTH] = ClientKind.CLI,
+        kind: Literal[ClientKind.CLI, ClientKind.AUTH, ClientKind.NO_AUTH] = ClientKind.CLI,
         ctl_gen_schemas: types.ModuleType | None = None,
         **kwargs: Any,
     ) -> None:
@@ -452,7 +452,7 @@ class Client(httpx.Client):
 
 # API Client Decorator for CLI Actions
 @contextlib.contextmanager
-def get_client(kind: Literal[ClientKind.CLI, ClientKind.AUTH] = ClientKind.CLI):
+def get_client(kind: Literal[ClientKind.CLI, ClientKind.AUTH, ClientKind.NO_AUTH] = ClientKind.CLI):
     """
     Get CLI API client.
 
@@ -477,7 +477,7 @@ def get_client(kind: Literal[ClientKind.CLI, ClientKind.AUTH] = ClientKind.CLI):
 
 
 def provide_api_client(
-    kind: Literal[ClientKind.CLI, ClientKind.AUTH] = ClientKind.CLI,
+    kind: Literal[ClientKind.CLI, ClientKind.AUTH, ClientKind.NO_AUTH] = ClientKind.CLI,
 ) -> Callable[[Callable[PS, RT]], Callable[PS, RT]]:
     """
     Provide a CLI API Client to the decorated function.

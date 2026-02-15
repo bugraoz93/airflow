@@ -98,7 +98,7 @@ If there is
 Until this process is automated, we need to manually create the version under,
 `airflow-ctl/src/airflowctl/api/datamodels/compat`.
 Create version name the same as the Airflow version that is being supported.
-Example: `airflow-ctl/src/airflowctl/api/datamodels/compat/3_1_0/*.py` for Airflow 3.1.0.
+Example: `airflow-ctl/src/airflowctl/api/datamodels/compat/v3_1_0/*.py` for Airflow 3.1.0.
 
 To do this, please generate the datamodels from the exact tag,
 
