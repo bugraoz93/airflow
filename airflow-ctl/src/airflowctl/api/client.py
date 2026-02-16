@@ -305,14 +305,6 @@ class AirflowCtlSchemaLocator:
     def _import_schema_module(self) -> types.ModuleType:
         """Import the schema module."""
         try:
-            __import__(self.schema)
-        except ImportError:
-            raise ImportError(
-                f"Could not import versioned schema {self.schema} \n"
-                f"Please ensure that the schema for Airflow version {self.schema} is available."
-            )
-
-        try:
             return importlib.import_module(self.schema)
         except ModuleNotFoundError:
             raise
@@ -320,7 +312,7 @@ class AirflowCtlSchemaLocator:
     def dynamic_load_schemas(self) -> types.ModuleType:
         """Dynamically load the schemas based on the current base URL."""
         # Importing generated schemas dynamically, this part can break everywhere
-        fall_back = False
+        fall_back: bool | None = False
         while not fall_back:
             try:
                 loaded_schema = self._import_schema_module()

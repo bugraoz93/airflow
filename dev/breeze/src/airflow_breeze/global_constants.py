@@ -777,6 +777,8 @@ MILESTONE_SKIP_LABELS: frozenset[str] = frozenset({"area:dev-tools", "area:dev-e
 AIRFLOW_CTL_INTEGRATION_TEST_VERSIONS: list[str] = ["main", "3.1.7"]
 AIRFLOW_CTL_INTEGRATION_TEST_ALL_VERSIONS: list[str] = [
     "main",
+    "3.1.0",
+    "3.1.1",
     "3.1.2",
     "3.1.3",
     "3.1.5",

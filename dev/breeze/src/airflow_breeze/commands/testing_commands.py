@@ -31,6 +31,7 @@ from click import IntRange
 
 from airflow_breeze.commands.ci_image_commands import rebuild_or_pull_ci_image_if_needed
 from airflow_breeze.commands.common_options import (
+    option_airflow_extras,
     option_airflow_ui_base_url,
     option_allow_pre_releases,
     option_backend,
@@ -77,8 +78,12 @@ from airflow_breeze.commands.common_options import (
     option_verbose,
 )
 from airflow_breeze.commands.common_package_installation_options import (
+    option_airflow_constraints_location,
+    option_airflow_constraints_mode_ci,
     option_airflow_constraints_reference,
     option_providers_constraints_location,
+    option_providers_constraints_mode_ci,
+    option_providers_constraints_reference,
     option_providers_skip_constraints,
     option_use_distributions_from_dist,
 )
@@ -96,6 +101,7 @@ from airflow_breeze.params.shell_params import ShellParams
 from airflow_breeze.utils.ci_group import ci_group
 from airflow_breeze.utils.click_utils import BreezeGroup
 from airflow_breeze.utils.console import Output, get_console
+from airflow_breeze.utils.constraints_version_check import determine_constraint_branch_used
 from airflow_breeze.utils.custom_param_types import BetterChoice, NotVerifiedBetterChoice
 from airflow_breeze.utils.docker_command_utils import (
     fix_ownership_using_docker,
@@ -880,6 +886,16 @@ def task_sdk_integration_tests(
         allow_extra_args=True,
     ),
 )
+@option_airflow_constraints_location
+@option_airflow_constraints_mode_ci
+@option_airflow_constraints_reference
+@option_airflow_extras
+@option_install_airflow_with_constraints
+@option_providers_constraints_location
+@option_providers_constraints_mode_ci
+@option_providers_constraints_reference
+@option_providers_skip_constraints
+@option_clean_airflow_installation
 @option_python
 @option_use_airflow_version
 @option_skip_docker_compose_deletion
@@ -906,6 +922,16 @@ def task_sdk_integration_tests(
 )
 @click.argument("extra_pytest_args", nargs=-1, type=click.Path(path_type=str))
 def airflowctl_integration_tests(
+    airflow_constraints_mode: str,
+    airflow_constraints_location: str,
+    airflow_constraints_reference: str,
+    airflow_extras: str,
+    install_airflow_with_constraints: bool,
+    providers_constraints_location: str,
+    providers_constraints_mode: str,
+    providers_constraints_reference: str,
+    providers_skip_constraints: bool,
+    clean_airflow_installation: bool,
     python: str,
     use_airflow_version: str,
     skip_docker_compose_deletion: bool,
@@ -935,8 +961,21 @@ def airflowctl_integration_tests(
     if use_airflow_version:
         os.environ["AIRFLOW_VERSION"] = use_airflow_version
 
+    airflow_constraints_reference = determine_constraint_branch_used(
+        airflow_constraints_reference, use_airflow_version
+    )
+
     get_console().print(f"[info]Using airflowctl version: {airflow_ctl_version}[/]")
     shell_params = ShellParams(
+        airflow_constraints_location=airflow_constraints_location,
+        airflow_constraints_mode=airflow_constraints_mode,
+        airflow_constraints_reference=airflow_constraints_reference,
+        airflow_extras=airflow_extras,
+        install_airflow_with_constraints=install_airflow_with_constraints,
+        providers_constraints_location=providers_constraints_location,
+        providers_constraints_mode=providers_constraints_mode,
+        providers_constraints_reference=providers_constraints_reference,
+        providers_skip_constraints=providers_skip_constraints,
         test_group=GroupOfTests.CTL_INTEGRATION,
         backend=backend,
         collect_only=collect_only,
