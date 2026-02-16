@@ -94,6 +94,16 @@ If there is
 
 * a newer Airflow version is released in between `airflow-ctl` versions
 * current release will be going to provide support to newer version of Airflow releases.
+* the schema has difference
+
+
+We need to check the schema if it equals to old version, no need for action. If changes there, create schema version.
+
+```shell
+apt-get install diffoscope
+diffoscope airflow-ctl/src/airflowctl/api/datamodels/auth_generated.py airflow-ctl/src/airflowctl/api/datamodels/compat/v3_1_7/auth_generated.py
+diffoscope airflow-ctl/src/airflowctl/api/datamodels/generated.py airflow-ctl/src/airflowctl/api/datamodels/compat/v3_1_7/generated.py
+```
 
 Until this process is automated, we need to manually create the version under,
 `airflow-ctl/src/airflowctl/api/datamodels/compat`.

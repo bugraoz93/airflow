@@ -261,8 +261,9 @@ class AirflowCtlSchemaLocator:
         self.base_url = base_url
         self.client_kind = client_kind
         self.schema = self._get_schema_module_name(kind=client_kind)
+        self.schema_version_suffix = None
 
-    def get_airflow_version(self):
+    def _get_airflow_version(self):
         """Make a request to the version endpoint to get the server version."""
         version_url = f"{self.base_url}/version"
         try:
@@ -278,7 +279,7 @@ class AirflowCtlSchemaLocator:
         if os.getenv("AIRFLOW_CLI_UNIT_TEST_MODE") == "true":
             return f"airflowctl.api.datamodels.{'auth_generated' if kind == ClientKind.AUTH else 'generated'}"
 
-        airflow_api_version = self.get_airflow_version()
+        airflow_api_version = self._get_airflow_version()
         base_import = "airflowctl.api.datamodels"
         is_compat = airflow_api_version != __latest_supported_airflow_version__
         suffix = f".v{airflow_api_version.replace('.', '_').replace('-', '_')}" if is_compat else ""
@@ -286,9 +287,23 @@ class AirflowCtlSchemaLocator:
         generated = "auth_generated" if kind == ClientKind.AUTH else "generated"
         return f"{base_import}{compat}{suffix}.{generated}"
 
-    def dynamic_load_schemas(self) -> types.ModuleType:
-        """Dynamically load the schemas based on the current base URL."""
-        # Importing generated schemas dynamically, this part can break everywhere
+    def _fallback_to_prior_schema_version(self) -> bool | None:
+        """Fallback to the prior minor version of the schema if the exact version is not found."""
+        if self.schema_version_suffix is None:
+            return False
+
+        parts = self.schema_version_suffix.split("_")
+        major, minor, patch = map(int, parts)
+        if minor == 0:
+            return None
+
+        minor -= 1
+        self.schema_version_suffix = f"v{major}_{minor}_{patch}"
+        self.schema = self.schema.replace(f".{self.schema_version_suffix}", f".{self.schema_version_suffix}")
+        return True
+
+    def _import_schema_module(self) -> types.ModuleType:
+        """Import the schema module."""
         try:
             __import__(self.schema)
         except ImportError:
@@ -299,11 +314,26 @@ class AirflowCtlSchemaLocator:
 
         try:
             return importlib.import_module(self.schema)
-        except ModuleNotFoundError as e:
-            raise ModuleNotFoundError(
-                "Generated schemas not found. "
-                "Please ensure that the schemas are generated and available for your Airflow (API) version."
-            ) from e
+        except ModuleNotFoundError:
+            raise
+
+    def dynamic_load_schemas(self) -> types.ModuleType:
+        """Dynamically load the schemas based on the current base URL."""
+        # Importing generated schemas dynamically, this part can break everywhere
+        fall_back = False
+        while not fall_back:
+            try:
+                loaded_schema = self._import_schema_module()
+                return loaded_schema
+            except ModuleNotFoundError:
+                fall_back = self._fallback_to_prior_schema_version()
+                if fall_back is None:
+                    break
+                continue
+        raise AirflowCtlNotFoundException(
+            "Generated schemas not found. "
+            "Please ensure that the schemas are generated and available for your Airflow (API) version."
+        )
 
 
 class BearerAuth(httpx.Auth):
