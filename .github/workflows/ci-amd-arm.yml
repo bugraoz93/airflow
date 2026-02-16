@@ -106,6 +106,7 @@ jobs:
       python-versions: ${{ steps.selective-checks.outputs.python-versions }}
       run-airflow-ctl-tests: ${{ steps.selective-checks.outputs.run-airflow-ctl-tests }}
       run-airflow-ctl-integration-tests: ${{ steps.selective-checks.outputs.run-airflow-ctl-integration-tests }}
+      run-airflow-ctl-integration-tests-with-versions: ${{ steps.selective-checks.outputs.run-airflow-ctl-integration-tests-with-versions }}
       run-amazon-tests: ${{ steps.selective-checks.outputs.run-amazon-tests }}
       run-api-codegen: ${{ steps.selective-checks.outputs.run-api-codegen }}
       run-api-tests: ${{ steps.selective-checks.outputs.run-api-tests }}
@@ -690,6 +691,7 @@ jobs:
       skip-providers-tests: ${{ needs.build-info.outputs.skip-providers-tests }}
       use-uv: ${{ needs.build-info.outputs.use-uv }}
       run-airflow-ctl-integration-tests: ${{ needs.build-info.outputs.run-airflow-ctl-integration-tests }}
+      run-airflow-ctl-integration-tests-with-versions: ${{ needs.build-info.outputs.run-airflow-ctl-integration-tests-with-versions }}
     if: needs.build-info.outputs.run-unit-tests == 'true'
 
   tests-with-lowest-direct-resolution-core:

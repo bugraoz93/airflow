@@ -73,6 +73,11 @@ on:  # yamllint disable-line rule:truthy
         required: false
         default: "false"
         type: string
+      run-airflow-ctl-integration-tests-with-versions:
+        description: "Airflow versions to run airflow-ctl integration tests with (json array)"
+        required: false
+        default: '["3.1.7", "main"]'
+        type: string
 permissions:
   contents: read
 jobs:
@@ -229,7 +234,7 @@ jobs:
       fail-fast: false
       matrix:
         # Let's maintain this manually for now and we can improve automation
-        airflow-version: ["3.1.7", "main"]
+        airflow-version: ${{ fromJSON(inputs.run-airflow-ctl-integration-tests-with-versions) }}
     env:
       PYTHON_MAJOR_MINOR_VERSION: "${{ inputs.default-python-version }}"
       GITHUB_REPOSITORY: ${{ github.repository }}

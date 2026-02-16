@@ -149,7 +149,6 @@ def pytest_sessionstart(session):
         console.print(f"[red]Stderr: {e.stderr}")
         raise
 
-    # docker_compose_up(session.config._tmp_path_factory)
     start_airflow_services(session.config._tmp_path_factory)
 
 

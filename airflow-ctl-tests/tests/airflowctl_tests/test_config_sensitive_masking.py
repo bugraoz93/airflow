@@ -31,7 +31,7 @@ SENSITIVE_CONFIG_COMMANDS = [
 ]
 
 
-@pytest.mark.skipif(Version("3.1.7") < TEST_AIRFLOW_VERSION, reason="Implemented after Airflow v3.1.7")
+@pytest.mark.skipif(Version("3.1.7") <= TEST_AIRFLOW_VERSION, reason="Implemented after Airflow v3.1.7")
 @pytest.mark.parametrize(
     "command",
     SENSITIVE_CONFIG_COMMANDS,
