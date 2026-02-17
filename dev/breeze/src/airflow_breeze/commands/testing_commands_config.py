@@ -242,6 +242,12 @@ TESTING_PARAMETERS: dict[str, list[dict[str, str | list[str]]]] = {
                 "--force-sa-warnings",
                 "--test-timeout",
                 "--airflow-ctl-version",
+                "--airflow-constraints-location",
+                "--airflow-constraints-mode",
+                "--airflow-constraints-reference",
+                "--airflow-extras",
+                "--install-airflow-with-constraints",
+                "--clean-airflow-installation",
             ],
         },
         {

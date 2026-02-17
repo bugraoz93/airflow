@@ -261,16 +261,14 @@ class AirflowCtlSchemaLocator:
         self.base_url = base_url
         self.client_kind = client_kind
         self.schema = self._get_schema_module_name(kind=client_kind)
-        self.schema_version_suffix = None
 
-    def _get_airflow_version(self):
+    def _get_airflow_version_from_api(self) -> str:
         """Make a request to the version endpoint to get the server version."""
         version_url = f"{self.base_url}/version"
         try:
-            airflow_api_version_response = requests.get(version_url).json()
+            return requests.get(version_url).json()["version"]
         except Exception as e:
             raise e
-        return airflow_api_version_response["version"]
 
     def _get_schema_module_name(
         self, kind: Literal[ClientKind.AUTH, ClientKind.CLI, ClientKind.NO_AUTH] = ClientKind.CLI
@@ -278,53 +276,42 @@ class AirflowCtlSchemaLocator:
         """Get the schema module name based on the base URL and client kind."""
         if os.getenv("AIRFLOW_CLI_UNIT_TEST_MODE") == "true":
             return f"airflowctl.api.datamodels.{'auth_generated' if kind == ClientKind.AUTH else 'generated'}"
-
-        airflow_api_version = self._get_airflow_version()
+        airflow_api_version = self._get_airflow_version_from_api()
+        self.schema_version_suffix = airflow_api_version.replace(".", "_")
         base_import = "airflowctl.api.datamodels"
         is_compat = airflow_api_version != __latest_supported_airflow_version__
-        suffix = f".v{airflow_api_version.replace('.', '_').replace('-', '_')}" if is_compat else ""
+        suffix = f".v{self.schema_version_suffix}" if is_compat else ""
         compat = ".compat" if is_compat else ""
         generated = "auth_generated" if kind == ClientKind.AUTH else "generated"
         return f"{base_import}{compat}{suffix}.{generated}"
 
-    def _fallback_to_prior_schema_version(self) -> bool | None:
+    def _fallback_to_prior_schema_version(self) -> bool:
         """Fallback to the prior minor version of the schema if the exact version is not found."""
-        if self.schema_version_suffix is None:
-            return False
-
         parts = self.schema_version_suffix.split("_")
         major, minor, patch = map(int, parts)
-        if minor == 0:
-            return None
-
-        minor -= 1
-        self.schema_version_suffix = f"v{major}_{minor}_{patch}"
-        self.schema = self.schema.replace(f".{self.schema_version_suffix}", f".{self.schema_version_suffix}")
+        patch -= 1
+        if patch < 0:
+            return False
+        new_schema_version_suffix = f"{major}_{minor}_{patch}"
+        self.schema = self.schema.replace(f"{self.schema_version_suffix}", f"{new_schema_version_suffix}")
+        self.schema_version_suffix = new_schema_version_suffix
         return True
-
-    def _import_schema_module(self) -> types.ModuleType:
-        """Import the schema module."""
-        try:
-            return importlib.import_module(self.schema)
-        except ModuleNotFoundError:
-            raise
 
     def dynamic_load_schemas(self) -> types.ModuleType:
         """Dynamically load the schemas based on the current base URL."""
         # Importing generated schemas dynamically, this part can break everywhere
-        fall_back: bool | None = False
-        while not fall_back:
+        fall_back = True
+        max_retries_version = 10
+        while fall_back and max_retries_version > 0:
             try:
-                loaded_schema = self._import_schema_module()
-                return loaded_schema
-            except ModuleNotFoundError:
+                __import__(self.schema)
+                return importlib.import_module(self.schema)
+            except (ModuleNotFoundError, TypeError):
                 fall_back = self._fallback_to_prior_schema_version()
-                if fall_back is None:
-                    break
-                continue
+                max_retries_version -= 1
         raise AirflowCtlNotFoundException(
-            "Generated schemas not found. "
-            "Please ensure that the schemas are generated and available for your Airflow (API) version."
+            f"'{self.schema}' cannot be imported"
+            ", Please ensure that the schema is available for your Airflow (API) version."
         )
 
 
@@ -367,6 +354,9 @@ class Client(httpx.Client):
                 client_kind=kind,
             ).dynamic_load_schemas()
         )
+        print(f"Schema loaded from module: {self.ctl_gen_schemas.__name__}")
+        print(f"Schema loaded from module: {self.ctl_gen_schemas.__file__}")
+        print(kwargs["base_url"])
 
     def refresh_base_url(
         self,
@@ -385,13 +375,9 @@ class Client(httpx.Client):
     ) -> str:
         """Get the base URL of the client."""
         base_url = base_url.rstrip("/")
-        default_base_url = f"{base_url}/api/v2"
-        if url_gen_kind == URLGenKind.INIT:
-            return default_base_url
-
-        if kind == ClientKind.AUTH:
+        if kind == ClientKind.AUTH and url_gen_kind != URLGenKind.INIT:
             return f"{base_url}/auth"
-        return default_base_url
+        return f"{base_url}/api/v2"
 
     @lru_cache()  # type: ignore[prop-decorator]
     @property

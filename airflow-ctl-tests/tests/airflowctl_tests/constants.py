@@ -33,7 +33,8 @@ DOCKER_COMPOSE_FILE_PATH = (
     AIRFLOW_ROOT_PATH / "airflow-core" / "docs" / "howto" / "docker-compose" / "docker-compose.yaml"
 )
 
+
+TEST_AIRFLOW_VERSION = Version(os.environ.get("USE_AIRFLOW_VERSION") or "3.2.0")
+
 LOGIN_COMMAND = "auth login --username admin --password admin"
 LOGIN_OUTPUT = "Login successful! Welcome to airflowctl!"
-
-TEST_AIRFLOW_VERSION = Version(os.environ.get("AIRFLOW_VERSION", "3.2.0"))

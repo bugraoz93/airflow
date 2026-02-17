@@ -20,12 +20,14 @@ import os
 import sys
 
 import pytest
+from packaging.version import Version
 
 from airflowctl_tests import console
 from airflowctl_tests.constants import (
     AIRFLOW_ROOT_PATH,
     LOGIN_COMMAND,
     LOGIN_OUTPUT,
+    TEST_AIRFLOW_VERSION,
 )
 
 
@@ -205,13 +207,28 @@ def debug_environment():
     console.print("[yellow]================================")
 
 
+def _install_task_sdk_less_3_1_2():
+    """Install task SDK to later versions of Airflow."""
+    import subprocess
+
+    console.print("[yellow]Installing apache-airflow-task-sdk for Airflow 3.1.0 and 3.1.1")
+    try:
+        cmd = ["uv", "pip", "install", "apache-airflow-task-sdk==1.1.2"]
+        console.print(f"[cyan]Running command: {' '.join(cmd)}")
+        subprocess.check_call(cmd)
+        console.print("[green]apache-airflow-task-sdk installed successfully!")
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        console.print(f"[red]❌ Installation failed: {e}")
+        raise
+
+
 def start_airflow_services(tmp_path_factory):
     """Start Airflow services directly without docker-compose."""
     import subprocess
     import time
 
     # If things started getting flaky for waiting jobs to run, increase this
-    process_wait_time = 5
+    process_wait_time = 10
 
     tmp_dir = tmp_path_factory.mktemp("airflow-ctl-test")
     airflow_home = tmp_dir / "airflow"
@@ -226,9 +243,15 @@ def start_airflow_services(tmp_path_factory):
     os.environ["AIRFLOW__CORE__EXECUTOR"] = "LocalExecutor"
     os.environ["AIRFLOW__CORE__LOAD_EXAMPLES"] = "true"
 
+    # cat and read version from airflow.cfg
+    console.print(f"[cyan]Airflow version used in airflowctl tests: {TEST_AIRFLOW_VERSION}")
+
+    if Version("3.1.2") > TEST_AIRFLOW_VERSION:
+        _install_task_sdk_less_3_1_2()
+
     _CtlTestState.airflow_home = str(airflow_home)
 
-    console.print("[yellow]Initializing Airflow database.")
+    console.print("[yellow]Initializing Airflow database")
     subprocess.run(
         ["airflow", "db", "migrate"],
         stdout=subprocess.DEVNULL,
@@ -250,7 +273,25 @@ def start_airflow_services(tmp_path_factory):
         },
     )
     _CtlTestState.airflow_processes.append(api_server)
-    time.sleep(process_wait_time)
+    time.sleep(process_wait_time * 2)
+
+    # Health check loop to ensure API server is up before starting other services
+    import requests
+
+    api_url = "http://localhost:8080/api/v2/monitor/health"
+    for _ in range(10):
+        try:
+            response = requests.get(api_url)
+            if (
+                response.status_code == 200
+                and response.json().get("metadatabase", {}).get("status") == "healthy"
+            ):
+                console.print("[green]Airflow API Server is healthy!")
+                break
+        except requests.RequestException:
+            pass
+        console.print("[yellow]Waiting for Airflow API Server to be healthy...")
+        time.sleep(5)
 
     console.print("[blue]Starting Airflow Scheduler")
     scheduler = subprocess.Popen(

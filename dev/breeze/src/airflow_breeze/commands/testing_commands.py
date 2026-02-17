@@ -82,8 +82,6 @@ from airflow_breeze.commands.common_package_installation_options import (
     option_airflow_constraints_mode_ci,
     option_airflow_constraints_reference,
     option_providers_constraints_location,
-    option_providers_constraints_mode_ci,
-    option_providers_constraints_reference,
     option_providers_skip_constraints,
     option_use_distributions_from_dist,
 )
@@ -891,10 +889,6 @@ def task_sdk_integration_tests(
 @option_airflow_constraints_reference
 @option_airflow_extras
 @option_install_airflow_with_constraints
-@option_providers_constraints_location
-@option_providers_constraints_mode_ci
-@option_providers_constraints_reference
-@option_providers_skip_constraints
 @option_clean_airflow_installation
 @option_python
 @option_use_airflow_version
@@ -927,10 +921,6 @@ def airflowctl_integration_tests(
     airflow_constraints_reference: str,
     airflow_extras: str,
     install_airflow_with_constraints: bool,
-    providers_constraints_location: str,
-    providers_constraints_mode: str,
-    providers_constraints_reference: str,
-    providers_skip_constraints: bool,
     clean_airflow_installation: bool,
     python: str,
     use_airflow_version: str,
@@ -972,10 +962,7 @@ def airflowctl_integration_tests(
         airflow_constraints_reference=airflow_constraints_reference,
         airflow_extras=airflow_extras,
         install_airflow_with_constraints=install_airflow_with_constraints,
-        providers_constraints_location=providers_constraints_location,
-        providers_constraints_mode=providers_constraints_mode,
-        providers_constraints_reference=providers_constraints_reference,
-        providers_skip_constraints=providers_skip_constraints,
+        clean_airflow_installation=clean_airflow_installation,
         test_group=GroupOfTests.CTL_INTEGRATION,
         backend=backend,
         collect_only=collect_only,
