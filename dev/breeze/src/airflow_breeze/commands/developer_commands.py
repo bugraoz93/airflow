@@ -387,7 +387,7 @@ def shell(
     if max_time:
         TimerThread(max_time=max_time).start()
         set_forced_answer("yes")
-    airflow_constraints_reference = _determine_constraint_branch_used(
+    airflow_constraints_reference = determine_constraint_branch_used(
         airflow_constraints_reference, use_airflow_version
     )
     platform = get_normalized_platform(platform)

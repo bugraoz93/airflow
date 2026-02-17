@@ -354,9 +354,6 @@ class Client(httpx.Client):
                 client_kind=kind,
             ).dynamic_load_schemas()
         )
-        print(f"Schema loaded from module: {self.ctl_gen_schemas.__name__}")
-        print(f"Schema loaded from module: {self.ctl_gen_schemas.__file__}")
-        print(kwargs["base_url"])
 
     def refresh_base_url(
         self,
