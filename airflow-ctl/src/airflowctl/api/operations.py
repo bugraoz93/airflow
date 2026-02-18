@@ -131,7 +131,7 @@ def _check_flag_and_exit_if_server_response_error(func):
     return wrapped
 
 
-def smart_exclude_none(model: BaseModel, schema_model: BaseModel) -> dict:
+def _schema_aware_model_dump(model: BaseModel, schema_model: BaseModel) -> dict:
     """
     Exclude None values from a model and check if field is required in current schema.
 
@@ -142,11 +142,8 @@ def smart_exclude_none(model: BaseModel, schema_model: BaseModel) -> dict:
     :return: A dictionary representation of the model with None values excluded, but including required fields set to None if they were missing.
     """
     model_dict = model.model_dump(mode="json", exclude_none=True)
-    for field_name, field in schema_model.model_fields.items():
-        if field_name not in model_dict and field.is_required():
-            # We are setting missing but required fields to None to fit schema perfectly
-            model_dict[field_name] = None
-    return model_dict
+    # Model construct ensures required fields to get their default
+    return schema_model.model_construct(**model_dict).model_dump(mode="json")
 
 
 # ClientKind CLI or NO_AUTH
@@ -233,7 +230,7 @@ class LoginOperations(BaseAuthOperations):
         """Login to the API server."""
         try:
             return self.ctl_gen_schemas.LoginResponse.model_validate_json(
-                self.client.post("/token/cli", json=login.model_dump(mode="json", exclude_none=True)).content
+                self.client.post("/token/cli", json=_schema_aware_model_dump(login, self.ctl_gen_schemas.LoginBody)).content
             )
         except ServerResponseError as e:
             raise e
@@ -279,7 +276,7 @@ class AssetsOperations(BaseOperations):
                 asset_event_body.extra = {}
             self.response = self.client.post(
                 "assets/events",
-                json=smart_exclude_none(asset_event_body, self.ctl_gen_schemas.CreateAssetEventsBody),
+                json=_schema_aware_model_dump(asset_event_body, self.ctl_gen_schemas.CreateAssetEventsBody),
             )
             return self.ctl_gen_schemas.AssetEventResponse.model_validate_json(self.response.content)
         except ServerResponseError as e:
@@ -355,7 +352,7 @@ class BackfillOperations(BaseOperations):
         """Create a backfill."""
         try:
             self.response = self.client.post(
-                "backfills", data=smart_exclude_none(backfill, self.ctl_gen_schemas.BackfillPostBody)
+                "backfills", data=_schema_aware_model_dump(backfill, self.ctl_gen_schemas.BackfillPostBody)
             )
             return self.ctl_gen_schemas.BackfillResponse.model_validate_json(self.response.content)
         except ServerResponseError as e:
@@ -365,7 +362,8 @@ class BackfillOperations(BaseOperations):
         """Create a dry run backfill."""
         try:
             self.response = self.client.post(
-                "backfills/dry_run", data=smart_exclude_none(backfill, self.ctl_gen_schemas.BackfillPostBody)
+                "backfills/dry_run",
+                data=_schema_aware_model_dump(backfill, self.ctl_gen_schemas.BackfillPostBody),
             )
             return self.ctl_gen_schemas.BackfillResponse.model_validate_json(self.response.content)
         except ServerResponseError as e:
@@ -455,7 +453,7 @@ class ConnectionsOperations(BaseOperations):
         """Create a connection."""
         try:
             self.response = self.client.post(
-                "connections", json=smart_exclude_none(connection, self.ctl_gen_schemas.ConnectionBody)
+                "connections", json=_schema_aware_model_dump(connection, self.ctl_gen_schemas.ConnectionBody)
             )
             return self.ctl_gen_schemas.ConnectionResponse.model_validate_json(self.response.content)
         except ServerResponseError as e:
@@ -466,7 +464,7 @@ class ConnectionsOperations(BaseOperations):
         try:
             self.response = self.client.patch(
                 "connections",
-                json=smart_exclude_none(connections, self.ctl_gen_schemas.BulkBodyConnectionBody),
+                json=_schema_aware_model_dump(connections, self.ctl_gen_schemas.BulkBodyConnectionBody),
             )
             return self.ctl_gen_schemas.BulkResponse.model_validate_json(self.response.content)
         except ServerResponseError as e:
@@ -496,7 +494,7 @@ class ConnectionsOperations(BaseOperations):
         try:
             self.response = self.client.patch(
                 f"connections/{connection.connection_id}",
-                json=smart_exclude_none(connection, self.ctl_gen_schemas.ConnectionBody),
+                json=_schema_aware_model_dump(connection, self.ctl_gen_schemas.ConnectionBody),
             )
             return self.ctl_gen_schemas.ConnectionResponse.model_validate_json(self.response.content)
         except ServerResponseError as e:
@@ -509,7 +507,8 @@ class ConnectionsOperations(BaseOperations):
         """Test a connection."""
         try:
             self.response = self.client.post(
-                "connections/test", json=smart_exclude_none(connection, self.ctl_gen_schemas.ConnectionBody)
+                "connections/test",
+                json=_schema_aware_model_dump(connection, self.ctl_gen_schemas.ConnectionBody),
             )
             return self.ctl_gen_schemas.ConnectionTestResponse.model_validate_json(self.response.content)
         except ServerResponseError as e:
@@ -546,7 +545,7 @@ class DagsOperations(BaseOperations):
     def update(self, dag_id: str, dag_body: DAGPatchBody) -> DAGResponse | ServerResponseError:
         try:
             self.response = self.client.patch(
-                f"dags/{dag_id}", json=smart_exclude_none(dag_body, self.ctl_gen_schemas.DAGPatchBody)
+                f"dags/{dag_id}", json=_schema_aware_model_dump(dag_body, self.ctl_gen_schemas.DAGPatchBody)
             )
             return self.ctl_gen_schemas.DAGResponse.model_validate_json(self.response.content)
         except ServerResponseError as e:
@@ -604,7 +603,7 @@ class DagsOperations(BaseOperations):
         try:
             self.response = self.client.post(
                 f"dags/{dag_id}/dagRuns",
-                json=smart_exclude_none(trigger_dag_run, self.ctl_gen_schemas.TriggerDAGRunPostBody),
+                json=_schema_aware_model_dump(trigger_dag_run, self.ctl_gen_schemas.TriggerDAGRunPostBody),
             )
             return self.ctl_gen_schemas.DAGRunResponse.model_validate_json(self.response.content)
         except ServerResponseError as e:
@@ -677,7 +676,7 @@ class PoolsOperations(BaseOperations):
         """Create a pool."""
         try:
             self.response = self.client.post(
-                "pools", json=smart_exclude_none(pool, self.ctl_gen_schemas.PoolBody)
+                "pools", json=_schema_aware_model_dump(pool, self.ctl_gen_schemas.PoolBody)
             )
             return self.ctl_gen_schemas.PoolResponse.model_validate_json(self.response.content)
         except ServerResponseError as e:
@@ -687,7 +686,7 @@ class PoolsOperations(BaseOperations):
         """CRUD multiple pools."""
         try:
             self.response = self.client.patch(
-                "pools", json=smart_exclude_none(pools, self.ctl_gen_schemas.BulkBodyPoolBody)
+                "pools", json=_schema_aware_model_dump(pools, self.ctl_gen_schemas.BulkBodyPoolBody)
             )
             return self.ctl_gen_schemas.BulkResponse.model_validate_json(self.response.content)
         except ServerResponseError as e:
@@ -706,7 +705,7 @@ class PoolsOperations(BaseOperations):
         try:
             self.response = self.client.patch(
                 f"pools/{pool_body.pool}",
-                json=smart_exclude_none(pool_body, self.ctl_gen_schemas.PoolPatchBody),
+                json=_schema_aware_model_dump(pool_body, self.ctl_gen_schemas.PoolPatchBody),
             )
             return self.ctl_gen_schemas.PoolResponse.model_validate_json(self.response.content)
         except ServerResponseError as e:
@@ -745,7 +744,7 @@ class VariablesOperations(BaseOperations):
         try:
             print(self.ctl_gen_schemas)
             self.response = self.client.post(
-                "variables", json=smart_exclude_none(variable, self.ctl_gen_schemas.VariableBody)
+                "variables", json=_schema_aware_model_dump(variable, self.ctl_gen_schemas.VariableBody)
             )
             return self.ctl_gen_schemas.VariableResponse.model_validate_json(self.response.content)
         except ServerResponseError as e:
@@ -755,7 +754,8 @@ class VariablesOperations(BaseOperations):
         """CRUD multiple variables."""
         try:
             self.response = self.client.patch(
-                "variables", json=smart_exclude_none(variables, self.ctl_gen_schemas.BulkBodyVariableBody)
+                "variables",
+                json=_schema_aware_model_dump(variables, self.ctl_gen_schemas.BulkBodyVariableBody),
             )
             return self.ctl_gen_schemas.BulkResponse.model_validate_json(self.response.content)
         except ServerResponseError as e:
@@ -774,7 +774,7 @@ class VariablesOperations(BaseOperations):
         try:
             self.response = self.client.patch(
                 f"variables/{variable.key}",
-                json=smart_exclude_none(variable, self.ctl_gen_schemas.VariableBody),
+                json=_schema_aware_model_dump(variable, self.ctl_gen_schemas.VariableBody),
             )
             return self.ctl_gen_schemas.VariableResponse.model_validate_json(self.response.content)
         except ServerResponseError as e:
@@ -859,7 +859,7 @@ class XComOperations(BaseOperations):
         try:
             self.response = self.client.post(
                 f"dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances/{task_id}/xcomEntries",
-                json=smart_exclude_none(body, self.ctl_gen_schemas.XComCreateBody),
+                json=_schema_aware_model_dump(body, self.ctl_gen_schemas.XComCreateBody),
             )
             return self.ctl_gen_schemas.XComResponseNative.model_validate_json(self.response.content)
         except ServerResponseError as e:
@@ -887,7 +887,7 @@ class XComOperations(BaseOperations):
         try:
             self.response = self.client.patch(
                 f"dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances/{task_id}/xcomEntries/{key}",
-                json=smart_exclude_none(body, self.ctl_gen_schemas.XComUpdateBody),
+                json=_schema_aware_model_dump(body, self.ctl_gen_schemas.XComUpdateBody),
             )
             return self.ctl_gen_schemas.XComResponseNative.model_validate_json(self.response.content)
         except ServerResponseError as e:
