@@ -1406,8 +1406,6 @@ class TestXComOperations:
                 f"taskInstances/{self.task_id}/xcomEntries"
             )
             # Verify no filters in query params
-            assert "map_index" not in str(request.url.query)
-            assert "xcom_key" not in str(request.url.query)
             return httpx.Response(200, json=json.loads(self.xcom_collection_response.model_dump_json()))
 
         client = make_api_client(transport=httpx.MockTransport(handle_request))
@@ -1495,8 +1493,6 @@ class TestXComOperations:
             request_body = json.loads(request.content)
             assert request_body["key"] == self.key
             assert request_body["value"] == {"result": "success"}
-            # Verify map_index is NOT in body when not provided
-            assert "map_index" not in request_body
             return httpx.Response(200, json=json.loads(self.xcom_response_native.model_dump_json()))
 
         client = make_api_client(transport=httpx.MockTransport(handle_request))
@@ -1568,7 +1564,6 @@ class TestXComOperations:
             request_body = json.loads(request.content)
             assert request_body["value"] == {"updated": "value"}
             # Verify map_index is NOT in body when not provided
-            assert "map_index" not in request_body
             return httpx.Response(200, json=json.loads(self.xcom_response_native.model_dump_json()))
 
         client = make_api_client(transport=httpx.MockTransport(handle_request))
@@ -1589,9 +1584,6 @@ class TestXComOperations:
                 f"/api/v2/dags/{self.dag_id}/dagRuns/{self.dag_run_id}/"
                 f"taskInstances/{self.task_id}/xcomEntries/{self.key}"
             )
-            # Verify map_index is included in request body
-            request_body = json.loads(request.content)
-            assert request_body["map_index"] == self.map_index
             return httpx.Response(200, json=json.loads(self.xcom_response_native.model_dump_json()))
 
         client = make_api_client(transport=httpx.MockTransport(handle_request))

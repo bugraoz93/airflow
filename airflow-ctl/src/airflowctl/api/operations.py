@@ -143,7 +143,7 @@ def smart_exclude_none(model: BaseModel, schema_model: BaseModel) -> dict:
     """
     model_dict = model.model_dump(mode="json", exclude_none=True)
     for field_name, field in schema_model.model_fields.items():
-        if field_name not in model_dict and field.is_required:
+        if field_name not in model_dict and field.is_required():
             # We are setting missing but required fields to None to fit schema perfectly
             model_dict[field_name] = None
     return model_dict
