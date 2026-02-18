@@ -775,10 +775,10 @@ MILESTONE_SKIP_LABELS: frozenset[str] = frozenset({"area:dev-tools", "area:dev-e
 
 # airflowctl integration tests to run on these Airflow Core API versions, using main as current development
 AIRFLOW_CTL_INTEGRATION_TEST_VERSIONS: list[str] = ["main", "3.1.7"]
+# 3.1.0 and 3.1.1 excluded. Currently, there is a problem with running API server
+# This needs to be fixed to include again
 AIRFLOW_CTL_INTEGRATION_TEST_ALL_VERSIONS: list[str] = [
     "main",
-    "3.1.0",
-    "3.1.1",
     "3.1.2",
     "3.1.3",
     "3.1.5",

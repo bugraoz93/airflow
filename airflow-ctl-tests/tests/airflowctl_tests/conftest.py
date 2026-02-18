@@ -20,7 +20,6 @@ import os
 import sys
 
 import pytest
-from packaging.version import Version
 
 from airflowctl_tests import console
 from airflowctl_tests.constants import (
@@ -207,21 +206,6 @@ def debug_environment():
     console.print("[yellow]================================")
 
 
-def _install_task_sdk_less_3_1_2():
-    """Install task SDK to later versions of Airflow."""
-    import subprocess
-
-    console.print("[yellow]Installing apache-airflow-task-sdk for Airflow 3.1.0 and 3.1.1")
-    try:
-        cmd = ["uv", "pip", "install", "apache-airflow-task-sdk==1.1.2"]
-        console.print(f"[cyan]Running command: {' '.join(cmd)}")
-        subprocess.check_call(cmd)
-        console.print("[green]apache-airflow-task-sdk installed successfully!")
-    except (subprocess.CalledProcessError, FileNotFoundError) as e:
-        console.print(f"[red]❌ Installation failed: {e}")
-        raise
-
-
 def start_airflow_services(tmp_path_factory):
     """Start Airflow services directly without docker-compose."""
     import subprocess
@@ -245,9 +229,6 @@ def start_airflow_services(tmp_path_factory):
 
     # cat and read version from airflow.cfg
     console.print(f"[cyan]Airflow version used in airflowctl tests: {TEST_AIRFLOW_VERSION}")
-
-    if Version("3.1.2") > TEST_AIRFLOW_VERSION:
-        _install_task_sdk_less_3_1_2()
 
     _CtlTestState.airflow_home = str(airflow_home)
 

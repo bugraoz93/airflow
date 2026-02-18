@@ -33,7 +33,7 @@ from rich.console import Console
 from rich.syntax import Syntax
 
 from airflow_breeze.branch_defaults import DEFAULT_AIRFLOW_CONSTRAINTS_BRANCH
-from airflow_breeze.global_constants import MOUNT_SELECTED
+from airflow_breeze.global_constants import GITHUB_REPO_BRANCH_PATTERN, MOUNT_SELECTED
 from airflow_breeze.params.shell_params import ShellParams
 from airflow_breeze.utils.console import Output, get_console
 from airflow_breeze.utils.docker_command_utils import execute_command_in_shell
