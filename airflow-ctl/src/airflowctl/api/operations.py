@@ -230,7 +230,7 @@ class LoginOperations(BaseAuthOperations):
         """Login to the API server."""
         try:
             return self.ctl_gen_schemas.LoginResponse.model_validate_json(
-                self.client.post("/token/cli", json=_schema_aware_model_dump(login, self.ctl_gen_schemas.LoginBody)).content
+                self.client.post("/token/cli", json=login.model_dump(mode="json", exclude_none=True)).content
             )
         except ServerResponseError as e:
             raise e
