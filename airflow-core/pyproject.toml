@@ -170,7 +170,8 @@ dependencies = [
 "async" = [
     "eventlet>=0.37.0",
     "gevent>=25.4.1",
-    "greenlet>=3.1.0",
+    # The greenlet 3.3.2 release has broken Linux support, so we need to exclude it until it is fixed. See https://github.com/apache/airflow/actions/runs/22238429576/job/64339880266
+    "greenlet>=3.1.0, !=3.3.2",
     "greenback>=1.2.1",
 ]
 "graphviz" = [
