@@ -83,7 +83,7 @@ UI Enhancements & Performance
 Airflow scheduler CLI command have a new ``--only-idle`` flag to only count runs when the scheduler is idle
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 It will help users to run the scheduler once and process all the triggered DAGs and all the queued tasks.
-It requires and complements the ``--num-runs`` flag so one can set a small value to it instead of gessing how many times the scheduler will run.
+It requires and complements the ``--num-runs`` flag so one can set a small value to it instead of guessing how many times the scheduler will run.
 
 Replace per-run TI summary requests with a single NDJSON stream
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
