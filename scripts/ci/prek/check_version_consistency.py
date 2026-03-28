@@ -162,6 +162,9 @@ def get_minimum_version_from_constraint(constraint: str) -> str | None:
         min_version = None
 
         for specifier in spec:
+            if specifier.operator == "==":
+                # Exact pin counts as both minimum and maximum
+                return specifier.version
             if specifier.operator in (">=", ">"):
                 if min_version is None or Version(specifier.version) > Version(min_version):
                     min_version = specifier.version
@@ -267,11 +270,15 @@ def main():
 
     # Verify constraints match between airflow-core and root pyproject.toml
     if task_sdk_constraint != root_task_sdk_constraint:
-        errors.append(
-            f"Task SDK constraint mismatch between pyproject.toml files:\n"
-            f"  airflow-core/pyproject.toml: apache-airflow-task-sdk{task_sdk_constraint}\n"
-            f"  pyproject.toml: apache-airflow-task-sdk{root_task_sdk_constraint}"
-        )
+        core_min = get_minimum_version_from_constraint(task_sdk_constraint)
+        root_min = get_minimum_version_from_constraint(root_task_sdk_constraint)
+        if core_min != root_min:
+            errors.append(
+                f"Task SDK constraint mismatch between pyproject.toml files:\n"
+                f"  airflow-core/pyproject.toml: apache-airflow-task-sdk{task_sdk_constraint}\n"
+                f"  pyproject.toml: apache-airflow-task-sdk{root_task_sdk_constraint}\n"
+                f"  Minimum versions differ: {core_min} vs {root_min}"
+            )
 
     # Report results
     if errors:
