@@ -437,7 +437,7 @@ class ConnectionsOperations(BaseOperations):
         except ServerResponseError as e:
             raise e
 
-    def list(self) -> ConnectionCollectionResponse | ServerResponseError:
+    def list(self) -> BaseModel | Any:
         """List all connections from the API server."""
         return super().execute_list(path="connections", data_model=ConnectionCollectionResponse)
 
